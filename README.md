@@ -1,6 +1,6 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/sjGoTOz-)
 
-## Proposal: 
+## Proposal
 We are proposing a subscription based real time debate web application where two users can join a private debate room and argue opposite sides of a topic. Users will sign in using Google OAuth 2.0 and subscribe through Stripe sandbox before creating or joining rooms.
 
 Each debate will have a topic, two participants, assigned sides, and a fixed turn based structure. This keeps the debate fair because both users will take turns giving arguments and rebuttals. As the debate happens, the system will store the transcript and room state in the database.
