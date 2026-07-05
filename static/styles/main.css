@@ -1,0 +1,249 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #eee7dc;
+  color: #241813;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.topbar {
+  height: 78px;
+  padding: 0 40px;
+  border-bottom: 1px solid #ded2c4;
+  background: #f8f3eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand,
+.main-nav,
+.nav-link,
+.button,
+.step-heading {
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  gap: 14px;
+}
+
+.brand-mark,
+.hero-icon,
+.step-icon {
+  border: 1px solid #dec7bf;
+  border-radius: 6px;
+  background: #efe2d9;
+  color: #7f202a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  font-size: 25px;
+}
+
+.brand-name {
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.brand-subtitle {
+  display: block;
+  color: #7a6154;
+  font-size: 13px;
+}
+
+.main-nav {
+  gap: 34px;
+  color: #7a6154;
+  font-size: 17px;
+}
+
+.nav-link {
+  gap: 10px;
+}
+
+.nav-link.active {
+  color: #7f202a;
+  font-weight: bold;
+}
+
+.nav-icon {
+  font-size: 20px;
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 70px 40px;
+}
+
+.hero {
+  text-align: center;
+}
+
+.hero-icon {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 28px;
+  font-size: 42px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+h1 {
+  font-size: 62px;
+}
+
+.title-rule {
+  width: 150px;
+  height: 2px;
+  margin: 20px auto 22px;
+  background: #d4b56b;
+}
+
+.hero p {
+  max-width: 600px;
+  margin: 0 auto;
+  color: #7a6154;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.hero-actions {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.button {
+  min-height: 56px;
+  padding: 0 30px;
+  border-radius: 5px;
+  gap: 12px;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.primary-button {
+  background: #7f202a;
+  color: white;
+}
+
+.secondary-button {
+  border: 1px solid #d8bfc0;
+  background: #fffdf9;
+  color: #241813;
+}
+
+.secondary-button span {
+  color: #7f202a;
+}
+
+.steps {
+  margin-top: 64px;
+}
+
+.steps h2 {
+  text-align: center;
+  font-size: 32px;
+}
+
+.step-list {
+  margin-top: 34px;
+  display: flex;
+  gap: 26px;
+}
+
+.step-card {
+  width: 100%;
+  min-height: 252px;
+  padding: 30px;
+  border: 1px solid #ded2c4;
+  border-radius: 5px;
+  background: #fffdf9;
+  box-shadow: 0 12px 26px #d8cdbf;
+}
+
+.step-heading {
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.step-icon {
+  width: 50px;
+  height: 50px;
+  background: #fffdf9;
+  color: #b88d31;
+  font-size: 28px;
+}
+
+.step-number {
+  color: #bd9a4d;
+  font-size: 31px;
+}
+
+.step-card h3 {
+  margin-bottom: 14px;
+  font-size: 24px;
+}
+
+.step-card p {
+  margin: 0;
+  color: #7a6154;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    height: auto;
+    padding: 20px;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .step-list {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 45px 18px;
+  }
+
+  h1 {
+    font-size: 42px;
+  }
+
+  .main-nav,
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .button {
+    justify-content: center;
+  }
+}
