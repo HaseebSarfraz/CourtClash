@@ -16,7 +16,8 @@ a {
 
 .topbar {
   height: 78px;
-  padding: 0 40px;
+  padding-left: 40px;
+  padding-right: 40px;
   border-bottom: 1px solid #ded2c4;
   background: #f8f3eb;
   display: flex;
@@ -24,22 +25,15 @@ a {
   justify-content: space-between;
 }
 
-.brand,
-.main-nav,
-.nav-link,
-.button,
-.step-heading {
+.brand {
   display: flex;
   align-items: center;
-}
-
-.brand {
   gap: 14px;
 }
 
-.brand-mark,
-.hero-icon,
-.step-icon {
+.brand-mark {
+  width: 44px;
+  height: 44px;
   border: 1px solid #dec7bf;
   border-radius: 6px;
   background: #efe2d9;
@@ -47,11 +41,6 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.brand-mark {
-  width: 44px;
-  height: 44px;
   font-size: 25px;
 }
 
@@ -69,12 +58,15 @@ a {
 }
 
 .main-nav {
-  gap: 34px;
+  display: flex;
+  align-items: center;
   color: #7a6154;
   font-size: 17px;
 }
 
 .nav-link {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -89,7 +81,8 @@ a {
 
 .page {
   max-width: 1280px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   padding: 70px 40px;
 }
 
@@ -100,7 +93,14 @@ a {
 .hero-icon {
   width: 70px;
   height: 70px;
-  margin: 0 auto 28px;
+  margin: 0 auto 28px auto;
+  border: 1px solid #dec7bf;
+  border-radius: 6px;
+  background: #efe2d9;
+  color: #7f202a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 42px;
 }
 
@@ -118,12 +118,12 @@ h1 {
 .title-rule {
   width: 150px;
   height: 2px;
-  margin: 20px auto 22px;
+  margin: 20px auto 22px auto;
   background: #d4b56b;
 }
 
 .hero p {
-  max-width: 600px;
+  width: 600px;
   margin: 0 auto;
   color: #7a6154;
   font-size: 18px;
@@ -139,8 +139,11 @@ h1 {
 
 .button {
   min-height: 56px;
-  padding: 0 30px;
+  padding-left: 30px;
+  padding-right: 30px;
   border-radius: 5px;
+  display: flex;
+  align-items: center;
   gap: 12px;
   font-size: 17px;
   font-weight: bold;
@@ -187,15 +190,22 @@ h1 {
 }
 
 .step-heading {
-  gap: 16px;
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .step-icon {
   width: 50px;
   height: 50px;
+  border: 1px solid #dec7bf;
+  border-radius: 6px;
   background: #fffdf9;
   color: #b88d31;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 28px;
 }
 
@@ -214,36 +224,4 @@ h1 {
   color: #7a6154;
   font-size: 18px;
   line-height: 1.5;
-}
-
-@media (max-width: 900px) {
-  .topbar {
-    height: auto;
-    padding: 20px;
-    flex-direction: column;
-    gap: 18px;
-  }
-
-  .step-list {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 560px) {
-  .page {
-    padding: 45px 18px;
-  }
-
-  h1 {
-    font-size: 42px;
-  }
-
-  .main-nav,
-  .hero-actions {
-    flex-direction: column;
-  }
-
-  .button {
-    justify-content: center;
-  }
 }
