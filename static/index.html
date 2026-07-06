@@ -5,7 +5,127 @@
     <link rel="stylesheet" href="styles/main.css" />
   </head>
   <body>
-    <div id="root"></div>
+    <header class="topbar">
+      <span class="brand-mark">&#9878;</span>
+      <span>
+        <span class="brand-name">CourtClash</span>
+        <span class="brand-subtitle">The Debate Chamber</span>
+      </span>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <div class="hero-icon">&#9878;</div>
+        <h1>Order in the Court</h1>
+        <div class="title-rule"></div>
+        <p>
+          Bring an opponent, take the stand, and argue by voice. When all
+          arguments are heard, the AI bench delivers its ruling.
+        </p>
+
+        <div class="hero-actions">
+          <button class="button primary-button" id="open-case-button" type="button">
+            Open a New Case
+          </button>
+          <button class="button secondary-button" id="join-case-button" type="button">
+            <span>&#9878;</span>
+            Join a Case
+          </button>
+        </div>
+      </section>
+
+      <section class="steps">
+        <h2>How Proceedings Unfold</h2>
+
+        <div class="step-list">
+          <article class="step-card">
+            <div class="step-heading">
+              <span class="step-icon">&#9900;</span>
+              <span class="step-number">1</span>
+            </div>
+            <h3>Open a Case</h3>
+            <p>
+              Set the topic and your assigned side. Share the case number with
+              your opponent to begin.
+            </p>
+          </article>
+
+          <article class="step-card">
+            <div class="step-heading">
+              <span class="step-icon">&#9874;</span>
+              <span class="step-number">2</span>
+            </div>
+            <h3>Take the Stand</h3>
+            <p>
+              Alternate turns - opening, argument, rebuttal. Speak your piece;
+              it's transcribed to the record live.
+            </p>
+          </article>
+
+          <article class="step-card">
+            <div class="step-heading">
+              <span class="step-icon">&#9878;</span>
+              <span class="step-number">3</span>
+            </div>
+            <h3>The Ruling</h3>
+            <p>
+              The AI bench reviews the full record and rules on strength,
+              relevance, consistency, and credibility.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <div class="popup-bg hidden" id="open-case-popup">
+      <section class="case-popup">
+        <button class="close-button" type="button" aria-label="Close">&times;</button>
+        <h2>File a New Case</h2>
+        <div class="popup-line"></div>
+
+        <form class="case-form">
+          <label class="field">
+            <span>Motion for Debate</span>
+            <input
+              type="text"
+              placeholder="e.g. Should AI replace teachers in classrooms?"
+            />
+          </label>
+
+          <div class="split-fields">
+            <label class="field">
+              <span>Plaintiff (You) Argues</span>
+              <input type="text" placeholder="e.g. For" />
+            </label>
+
+            <label class="field">
+              <span>Defense (Opponent) Argues</span>
+              <input type="text" placeholder="e.g. Against" />
+            </label>
+          </div>
+
+          <button class="submit-button" type="submit">Convene the Court</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="popup-bg hidden" id="join-case-popup">
+      <section class="case-popup">
+        <button class="close-button" type="button" aria-label="Close">&times;</button>
+        <h2>Enter the Chamber</h2>
+        <div class="popup-line"></div>
+
+        <form class="case-form">
+          <label class="field">
+            <span>Case Number</span>
+            <input class="case-code-input" type="text" placeholder="ABC123" />
+          </label>
+
+          <button class="submit-button" type="submit">Take the Stand</button>
+        </form>
+      </section>
+    </div>
+
     <script type="module" src="js/index.js"></script>
   </body>
 </html>

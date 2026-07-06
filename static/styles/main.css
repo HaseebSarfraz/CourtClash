@@ -14,6 +14,20 @@ a {
   text-decoration: none;
 }
 
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
 .topbar {
   height: 78px;
   padding-left: 40px;
@@ -23,12 +37,6 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
 }
 
 .brand-mark {
@@ -55,28 +63,6 @@ a {
   display: block;
   color: #7a6154;
   font-size: 13px;
-}
-
-.main-nav {
-  display: flex;
-  align-items: center;
-  color: #7a6154;
-  font-size: 17px;
-}
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.nav-link.active {
-  color: #7f202a;
-  font-weight: bold;
-}
-
-.nav-icon {
-  font-size: 20px;
 }
 
 .page {
@@ -162,6 +148,98 @@ h1 {
 
 .secondary-button span {
   color: #7f202a;
+}
+
+.popup-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  padding: 30px;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.case-popup {
+  position: relative;
+  width: min(640px, 100%);
+  padding: 32px 30px;
+  border-radius: 5px;
+  background: #fffdf9;
+}
+
+.case-popup h2 {
+  font-size: 32px;
+}
+
+.popup-line {
+  width: 78px;
+  height: 1px;
+  margin-top: 10px;
+  background: #d4b56b;
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: transparent;
+  color: #7a6154;
+  font-size: 30px;
+}
+
+.case-form {
+  margin-top: 46px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field span {
+  color: #7a6154;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.split-fields {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.field input {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  border: 1px solid #d4c4b2;
+  border-radius: 4px;
+  background: #eee7dc;
+  color: #241813;
+  font-size: 18px;
+}
+
+.case-code-input {
+  text-align: center;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+}
+
+.submit-button {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 24px;
+  border-radius: 4px;
+  background: #bb8f95;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .steps {
