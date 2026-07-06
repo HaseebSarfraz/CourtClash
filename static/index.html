@@ -129,3 +129,153 @@
     <script type="module" src="js/index.js"></script>
   </body>
 </html>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CourtClash</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <script src="js/api-service.js" defer></script>
+    <script src="js/index.js" defer></script>
+  </head>
+  <body>
+    <main class="auth-page">
+      <section class="auth-shell" aria-labelledby="auth-title">
+        <header class="brand-block">
+          <div class="brand-mark" aria-hidden="true">
+            <span class="brand-mark__icon">⚖</span>
+          </div>
+          <h1 id="auth-title" class="brand-title">CourtClash</h1>
+          <p class="brand-subtitle">enter the chamber</p>
+        </header>
+
+        <section class="auth-card" aria-label="Sign in with Google">
+          <button class="oauth-button" type="button">
+            <span class="oauth-button__icon" aria-hidden="true">G</span>
+            <span>Continue with Google</span>
+          </button>
+
+          <p class="auth-note">
+            Sign in securely with your Google account to access the CourtClash
+            debate chamber.
+          </p>
+        </section>
+      </section>
+    </main>
+
+    <div class="header">
+      <div class="header-title">
+        <h1>CourtClash</h1>
+      </div>
+
+      <div class="header-nav">
+        <div data-page="lobby" id="lobby"><p>Lobby</p></div>
+        <div class="case-files" id="caseFiles"><p>Case Files</p></div>
+        <div data-page="settings" id="settings"><p>Settings</p></div>
+        <div class="subscription-btn" id="pricing"><p>Pricing</p></div>
+      </div>
+
+      <div class="username">
+        <p>name@gmail.com</p>
+        <i class="fa-solid fa-arrow-right-from-bracket sign-out"></i>
+      </div>
+    </div>
+
+    <div class="lobby-page" id="lobbyPage">
+      <h2>Lobby</h2>
+      <p>Welcome back! Jump into a debate or see who's online.</p>
+    </div>
+
+    <div class="case-files-page" id="caseFilesPage">
+      <h2>Case Files</h2>
+
+      <div class="record-standing">
+        <h3>Record of Standing</h3>
+        <div class="standing-cards">
+          <div class="standing-card">
+            <i class="fa-solid fa-scale-balanced icon-heard"></i>
+            <div class="standing-number" id="statHeard">0</div>
+            <div class="standing-label">Cases Heard</div>
+          </div>
+
+          <div class="standing-card">
+            <i class="fa-solid fa-trophy icon-won"></i>
+            <div class="standing-number" id="statWon">0</div>
+            <div class="standing-label">Won</div>
+          </div>
+
+          <div class="standing-card">
+            <i class="fa-solid fa-circle-xmark icon-lost"></i>
+            <div class="standing-number" id="statLost">0</div>
+            <div class="standing-label">Lost</div>
+          </div>
+
+          <div class="standing-card">
+            <i class="fa-solid fa-circle-minus icon-tied"></i>
+            <div class="standing-number" id="statTied">0</div>
+            <div class="standing-label">Tied</div>
+          </div>
+
+          <div class="standing-card">
+            <i class="fa-solid fa-percent icon-rate"></i>
+            <div class="standing-number" id="statRate">0%</div>
+            <div class="standing-label">Win Rate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-section">
+        <h3>Debate History</h3>
+        <div class="history-list" id="historyList">
+          <p>No Debate History.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-page" id="settingsPage">
+      <h2>Settings</h2>
+      <p>Account and preference settings go here.</p>
+    </div>
+
+    <div class="pricing-page" id="pricingPage">
+      <div class="models">
+        <div><h3>Basic</h3></div>
+        <div>
+          <p>
+            For Only $9.99
+            <span class="per-month">per member / month</span>
+          </p>
+        </div>
+        <div class="includes"><h5>Includes:</h5></div>
+        <div class="features">
+          <p>&#10003; Up to 2 debates per day</p>
+          <p>&#10003; Debate exclusively with Premium members</p>
+          <p>&#10003; Sessions capped at 15 minutes</p>
+          <p>&#10003; Access to curated debate topics</p>
+        </div>
+        <button class="get-started">Get Started</button>
+      </div>
+
+      <div class="models">
+        <div><h3>Premium</h3></div>
+        <div>
+          <p>
+            For Only $19.99
+            <span class="per-month">per member / month</span>
+          </p>
+        </div>
+        <div class="includes"><h5>Includes:</h5></div>
+        <div class="features">
+          <p>&#10003; Unlimited debate duration</p>
+          <p>&#10003; Debate with members and non-members alike</p>
+          <p>&#10003; Unlimited daily debates</p>
+          <p>&#10003; Full access to exclusive and premium topics</p>
+          <p>&#10003; Priority matchmaking with top-tier debaters</p>
+        </div>
+        <button class="get-started">Get Started</button>
+      </div>
+    </div>
+  </body>
+</html>
