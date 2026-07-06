@@ -284,3 +284,347 @@ a:focus-visible {
     align-items: flex-start;
   }
 }
+
+/* base */
+body {
+  background-color: #f2ece2;
+  padding: 0px;
+  margin: 0px;
+  color: #1e1b16;
+  font-family: sans-serif;
+}
+
+/* header */
+.header {
+  background-color: #ede5d9;
+  border-bottom: 2px solid #ddd2bf;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  position: relative;
+}
+
+.header-title {
+  padding-left: 20px;
+}
+
+.header-title h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e1b16;
+}
+
+.header-nav {
+  display: flex;
+  gap: 40px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.header-nav p {
+  cursor: pointer;
+  font-size: 16px;
+  color: #1e1b16;
+  font-weight: bold;
+  transition: color 0.2s ease;
+}
+
+.header-nav p:hover {
+  color: #b8934c;
+}
+
+.header-nav [data-page].active p {
+  font-weight: bold;
+}
+
+.username {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.username p {
+  font-size: 16px;
+  color: #1e1b16;
+  font-weight: bold;
+}
+
+.sign-out {
+  cursor: pointer;
+  color: #5c5346;
+  font-size: 16px;
+  transition: color 0.2s ease;
+}
+
+.sign-out:hover {
+  color: #c0564a;
+}
+
+/* pricing page */
+.pricing-page {
+  display: flex;
+  align-content: center;
+  margin: 0px 20px;
+}
+
+.models {
+  display: flex;
+  flex-direction: column;
+  margin: 30px 10px 10px 10px;
+  padding: 0px 0px 10px 10px;
+  flex: 1;
+  background-color: #faf8f4;
+  border-radius: 8px;
+  border: 1px solid #ddd2bf;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.models:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.models h3 {
+  color: #1e1b16;
+}
+
+.models p {
+  color: #5c5346;
+}
+
+.per-month {
+  font-size: 14px;
+  color: #948a76;
+}
+
+.includes {
+  padding-left: 10px;
+}
+
+.features {
+  padding-left: 20px;
+  flex-grow: 1;
+}
+
+.get-started {
+  background-color: #b8934c;
+  color: #faf8f4;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  margin: 10px;
+  margin-top: auto;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.get-started:hover {
+  background-color: #8a6a2e;
+}
+
+/* ---- Case Files page ---- */
+
+.case-files-page {
+  margin: 0px 20px;
+  padding-bottom: 40px;
+}
+
+.case-files-page h2 {
+  padding-top: 20px;
+}
+
+/* Record of Standing */
+
+.record-standing {
+  margin-top: 10px;
+}
+
+.record-standing h3 {
+  color: #1e1b16;
+  margin-bottom: 4px;
+}
+
+.standing-cards {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.standing-card {
+  flex: 1;
+  min-width: 160px;
+  background-color: #faf8f4;
+  border: 1px solid #ddd2bf;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.standing-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.standing-card i {
+  font-size: 20px;
+  width: 24px;
+}
+
+.icon-heard {
+  color: #000000;
+}
+
+.icon-won {
+  color: #398b39;
+}
+
+.icon-lost {
+  color: #ff3535;
+}
+
+.icon-tied {
+  color: #b8934c;
+}
+
+.icon-rate {
+  color: #5c5346;
+}
+
+.standing-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e1b16;
+}
+
+.standing-label {
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #948a76;
+  font-weight: bold;
+}
+
+/* Debate History */
+
+.history-section {
+  margin-top: 40px;
+}
+
+.history-section h3 {
+  color: #1e1b16;
+  margin-bottom: 16px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-card {
+  background-color: #faf8f4;
+  border: 1px solid #ddd2bf;
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+}
+
+.history-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.history-topic {
+  font-weight: bold;
+  color: #1e1b16;
+  font-size: 15px;
+}
+
+.history-meta {
+  font-size: 13px;
+  color: #948a76;
+}
+
+.history-matchup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.history-side {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background-color: #ede5d9;
+  color: #5c5346;
+  font-weight: bold;
+}
+
+.history-side.winner {
+  background-color: #e7dcc5;
+  color: #7a5a1e;
+  border: 1px solid #b8934c;
+}
+
+.history-vs {
+  color: #948a76;
+  font-size: 12px;
+}
+
+.history-result {
+  min-width: 90px;
+  text-align: right;
+  font-weight: bold;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-result.won {
+  color: #4a7a3a;
+}
+
+.history-result.lost {
+  color: #c0564a;
+}
+
+.history-result.tied {
+  color: #948a76;
+}
+
+.history-loader {
+  text-align: center;
+  padding: 20px;
+  color: #948a76;
+  font-size: 14px;
+}
+
+.history-loader.hidden {
+  display: none;
+}
+
+.history-end {
+  text-align: center;
+  padding: 20px;
+  color: #948a76;
+  font-size: 14px;
+  font-style: italic;
+}
