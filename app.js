@@ -38,7 +38,7 @@ passport.use(
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     (accessToken, refreshToken, profile, done) => {
-        
+
         let email = null;
         if (profile.emails && profile.emails.length > 0) {
         email = profile.emails[0].value;
@@ -66,5 +66,5 @@ app.use(express.static("static"));
 app.use("/auth", authRouter);
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log("Server running on http://localhost:${PORT}");
 });
