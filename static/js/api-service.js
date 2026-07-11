@@ -1,39 +1,35 @@
-let apiService = (function () {
-  let module = {};
+export function redirectToGoogle() {
+  window.location.href = "/auth/google";
+}
 
-  module.redirectToGoogle = function () {
-    window.location.href = "/auth/google";
-  };
+export function logout() {
+  return fetch("/auth/logout", {
+    method: "POST",
+    credentials: "include",
+  }).then((res) => res.json());
+}
 
-  module.logout = function () {
-    return fetch("/auth/logout", {
-      method: "POST",
-    }).then((res) => res.json());
-  };
+export function getCurrentUser() {
+  return fetch("/auth/me", {
+    method: "GET",
+    credentials: "include",
+  }).then((res) => res.json());
+}
 
-  module.getCurrentUser = function () {
-    return fetch("/auth/me", {
-      method: "GET",
-    }).then((res) => res.json());
-  };
+export function storeCurrentUser(user) {
+  localStorage.setItem("courtclashUser", JSON.stringify(user));
+}
 
-  module.storeCurrentUser = function (user) {
-    localStorage.setItem("courtclashUser", JSON.stringify(user));
-  };
+export function getStoredCurrentUser() {
+  const storedUser = localStorage.getItem("courtclashUser");
 
-  module.getStoredCurrentUser = function () {
-    const storedUser = localStorage.getItem("courtclashUser");
+  if (!storedUser) {
+    return null;
+  }
 
-    if (!storedUser) {
-      return null;
-    }
+  return JSON.parse(storedUser);
+}
 
-    return JSON.parse(storedUser);
-  };
-
-  module.clearStoredCurrentUser = function () {
-    localStorage.removeItem("courtclashUser");
-  };
-
-  return module;
-})();
+export function clearStoredCurrentUser() {
+  localStorage.removeItem("courtclashUser");
+}

@@ -14,7 +14,7 @@ const handleGoogleCallback = passport.authenticate("google", {
 router.get("/google", startGoogleAuth);
 
 router.get("/google/callback", handleGoogleCallback, (req, res) => {
-  res.redirect("/"); // attaches user to req.user and redirects to the home page
+  res.redirect("http://localhost:5173"); // attaches user to req.user and redirects to the home page
 });
 
 router.get("/me", (req, res) => {
