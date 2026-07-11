@@ -15,21 +15,3 @@ export function getCurrentUser() {
     credentials: "include",
   }).then((res) => res.json());
 }
-
-export function storeCurrentUser(user) {
-  localStorage.setItem("courtclashUser", JSON.stringify(user));
-}
-
-export function getStoredCurrentUser() {
-  const storedUser = localStorage.getItem("courtclashUser");
-
-  if (!storedUser) {
-    return null;
-  }
-
-  return JSON.parse(storedUser);
-}
-
-export function clearStoredCurrentUser() {
-  localStorage.removeItem("courtclashUser");
-}

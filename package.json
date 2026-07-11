@@ -4,11 +4,11 @@
   "description": "CourtClash final project",
   "main": "app.js",
   "scripts": {
-  "start": "node app.js",
-  "server": "nodemon app.js",
-  "client": "vite",
-  "build": "vite build",
-  "preview": "vite preview"
+    "start": "node app.js",
+    "server": "nodemon app.js",
+    "client": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "dotenv": "^16.6.1",
@@ -18,7 +18,9 @@
     "passport-google-oauth20": "^2.0.0",
     "prettier": "^3.8.4",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "sequelize": "^6.37.8",
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.3",

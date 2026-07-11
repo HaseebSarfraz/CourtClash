@@ -8,7 +8,7 @@ const startGoogleAuth = passport.authenticate("google", {
 });
 
 const handleGoogleCallback = passport.authenticate("google", {
-  failureRedirect: "/"
+  failureRedirect: "http://localhost:5173?authError=google"
 });
 
 router.get("/google", startGoogleAuth);

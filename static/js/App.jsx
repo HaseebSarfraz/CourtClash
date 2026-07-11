@@ -3,14 +3,13 @@ import {
   redirectToGoogle,
   logout,
   getCurrentUser,
-  storeCurrentUser,
-  clearStoredCurrentUser,
 } from "./api-service";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("auth");
   const [currentUser, setCurrentUser] = useState(null);
   const [currentPopup, setCurrentPopup] = useState(null);
+  const [authError, setAuthError] = useState("");
 
   function handleOpenCaseClick() {
     setCurrentPopup("openCase");
@@ -30,7 +29,6 @@ export default function App() {
 
   function handleLogout() {
     logout().then(function () {
-      clearStoredCurrentUser();
       setCurrentUser(null);
       setCurrentPage("auth");
     });
@@ -38,18 +36,19 @@ export default function App() {
 
   useEffect(function () {
     getCurrentUser().then(function (data) {
-      console.log("auth/me response:", data);
+
+      const params = new URLSearchParams(window.location.search);
+      const authErrorFromUrl = params.get("authError");
+
+      if (authErrorFromUrl === "google") {
+        setAuthError("Google sign-in failed. Please try again.");
+      }
 
       if (!data.user) {
-        console.log("No user found, showing auth page");
-        clearStoredCurrentUser();
         setCurrentUser(null);
         setCurrentPage("auth");
         return;
       }
-
-      console.log("User found, showing lobby");
-      storeCurrentUser(data.user);
       setCurrentUser(data.user);
       setCurrentPage("lobby");
     });
@@ -82,9 +81,11 @@ export default function App() {
                 <span>Continue with Google</span>
               </button>
 
-              <p className="auth-note">
-                Sign in securely with your Google account to access the
-                CourtClash debate chamber.
+              {authError && <p className="auth-error">{authError}</p>}
+
+              <p className="auth-helper">
+                Sign in securely with your Google account to access the CourtClash
+                debate chamber.
               </p>
             </section>
           </section>
