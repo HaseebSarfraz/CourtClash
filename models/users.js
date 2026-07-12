@@ -17,5 +17,11 @@ const User = sequelize.define("User", {
   },
 });
 
+function associateUserModels({ Case, DebateMessage }) {
+  User.hasMany(Case, { foreignKey: "userOneId", as: "casesAsUserOne" });
+  User.hasMany(Case, { foreignKey: "userTwoId", as: "casesAsUserTwo" });
+  User.hasMany(Case, { foreignKey: "winnerUserId", as: "wonCases" });
+  User.hasMany(DebateMessage, { foreignKey: "userId", as: "debateMessages" });
+}
 
-module.exports = { User };
+module.exports = { User, associateUserModels };

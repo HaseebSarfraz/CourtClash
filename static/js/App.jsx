@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 import {
   redirectToGoogle,
   logout,
@@ -10,6 +11,11 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentPopup, setCurrentPopup] = useState(null);
   const [authError, setAuthError] = useState("");
+  const [socket, setSocket] = useState(null);
+  const [roomState, setRoomState] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [roomError, setRoomError] = useState("");
+  const [messageText, setMessageText] = useState("");
 
   function handleOpenCaseClick() {
     setCurrentPopup("openCase");
@@ -31,7 +37,87 @@ export default function App() {
     logout().then(function () {
       setCurrentUser(null);
       setCurrentPage("auth");
+      setRoomState(null);
+      setMessages([]);
     });
+  }
+
+  function handleRoomResponse(response) {
+    if (!response || response.error) {
+      setRoomError(response ? response.error : "Room action failed.");
+      return;
+    }
+
+    setRoomError("");
+    setRoomState(response.state.room);
+    setMessages(response.state.messages);
+    setCurrentPopup(null);
+    setCurrentPage("debate");
+  }
+
+  function handleCreateCaseSubmit(event) {
+    event.preventDefault();
+
+    if (!socket) {
+      setRoomError("Socket is not connected yet.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+
+    socket.emit(
+      "room:create",
+      {
+        topic: formData.get("topic"),
+        userOneSide: formData.get("userOneSide"),
+        userTwoSide: formData.get("userTwoSide"),
+      },
+      handleRoomResponse
+    );
+  }
+
+  function handleJoinCaseSubmit(event) {
+    event.preventDefault();
+
+    if (!socket) {
+      setRoomError("Socket is not connected yet.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+
+    socket.emit(
+      "room:join",
+      {
+        roomCode: formData.get("roomCode"),
+      },
+      handleRoomResponse
+    );
+  }
+
+  function handleSendMessage(event) {
+    event.preventDefault();
+
+    if (!socket || !roomState) {
+      return;
+    }
+
+    socket.emit(
+      "room:message",
+      {
+        roomCode: roomState.roomCode,
+        content: messageText,
+      },
+      function (response) {
+        if (response && response.error) {
+          setRoomError(response.error);
+          return;
+        }
+
+        setRoomError("");
+        setMessageText("");
+      }
+    );
   }
 
   useEffect(function () {
@@ -53,6 +139,58 @@ export default function App() {
       setCurrentPage("lobby");
     });
   }, []);
+
+  useEffect(function () {
+    if (!currentUser) {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+      return;
+    }
+
+    const nextSocket = io({
+      withCredentials: true,
+    });
+
+    nextSocket.on("connect_error", function (error) {
+      setRoomError(error.message);
+    });
+
+    nextSocket.on("room:state", function (state) {
+      setRoomState(state.room);
+      setMessages(state.messages);
+      setCurrentPopup(null);
+      setCurrentPage("debate");
+    });
+
+    nextSocket.on("room:message", function (message) {
+      setMessages(function (currentMessages) {
+        const alreadyAdded = currentMessages.some(function (currentMessage) {
+          return currentMessage.id === message.id;
+        });
+
+        if (alreadyAdded) {
+          return currentMessages;
+        }
+
+        return [...currentMessages, message];
+      });
+    });
+
+    setSocket(nextSocket);
+
+    return function () {
+      nextSocket.disconnect();
+    };
+  }, [currentUser]);
+
+  const mySide =
+    roomState && currentUser && roomState.userOneId === currentUser.id
+      ? roomState.userOneSide
+      : roomState
+        ? roomState.userTwoSide
+        : "";
 
   return (
     <>
@@ -320,6 +458,68 @@ export default function App() {
             </div>
           )}
 
+          {currentPage === "debate" && roomState && (
+            <div className="debate-page">
+              <section className="debate-header">
+                <div>
+                  <p className="room-code-label">Room Code</p>
+                  <h2>{roomState.roomCode}</h2>
+                </div>
+                <div>
+                  <p className="room-code-label">Your Side</p>
+                  <h2>{mySide}</h2>
+                </div>
+              </section>
+
+              <section className="debate-topic">
+                <h2>{roomState.topic}</h2>
+                <p>
+                  {roomState.status === "waiting"
+                    ? "Waiting for the second debater to join."
+                    : "Both debaters are in the room."}
+                </p>
+              </section>
+
+              <section className="transcript-panel">
+                <h3>Live Transcript</h3>
+                <div className="message-list">
+                  {messages.length === 0 && <p>No transcript yet.</p>}
+                  {messages.map(function (message) {
+                    return (
+                      <article
+                        className={
+                          message.userId === currentUser.id
+                            ? "message own-message"
+                            : "message"
+                        }
+                        key={message.id}
+                      >
+                        <strong>
+                          {message.user ? message.user.email : "Unknown user"}
+                        </strong>
+                        <p>{message.content}</p>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                {roomError && <p className="auth-error">{roomError}</p>}
+
+                <form className="message-form" onSubmit={handleSendMessage}>
+                  <input
+                    type="text"
+                    value={messageText}
+                    onChange={(event) => setMessageText(event.target.value)}
+                    placeholder="Add to the record..."
+                  />
+                  <button className="submit-button" type="submit">
+                    Send
+                  </button>
+                </form>
+              </section>
+            </div>
+          )}
+
           {currentPopup === "openCase" && (
             <div
               className="popup-bg"
@@ -341,10 +541,11 @@ export default function App() {
                 <h2>File a New Case</h2>
                 <div className="popup-line"></div>
 
-                <form className="case-form">
+                <form className="case-form" onSubmit={handleCreateCaseSubmit}>
                   <label className="field">
                     <span>Motion for Debate</span>
                     <input
+                      name="topic"
                       type="text"
                       placeholder="e.g. Should AI replace teachers in classrooms?"
                     />
@@ -353,14 +554,24 @@ export default function App() {
                   <div className="split-fields">
                     <label className="field">
                       <span>Plaintiff (You) Argues</span>
-                      <input type="text" placeholder="e.g. For" />
+                      <input
+                        name="userOneSide"
+                        type="text"
+                        placeholder="e.g. For"
+                      />
                     </label>
 
                     <label className="field">
                       <span>Defense (Opponent) Argues</span>
-                      <input type="text" placeholder="e.g. Against" />
+                      <input
+                        name="userTwoSide"
+                        type="text"
+                        placeholder="e.g. Against"
+                      />
                     </label>
                   </div>
+
+                  {roomError && <p className="auth-error">{roomError}</p>}
 
                   <button className="submit-button" type="submit">
                     Convene the Court
@@ -391,15 +602,18 @@ export default function App() {
                 <h2>Enter the Chamber</h2>
                 <div className="popup-line"></div>
 
-                <form className="case-form">
+                <form className="case-form" onSubmit={handleJoinCaseSubmit}>
                   <label className="field">
                     <span>Case Number</span>
                     <input
                       className="case-code-input"
+                      name="roomCode"
                       type="text"
                       placeholder="ABC123"
                     />
                   </label>
+
+                  {roomError && <p className="auth-error">{roomError}</p>}
 
                   <button className="submit-button" type="submit">
                     Take the Stand

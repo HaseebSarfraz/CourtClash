@@ -745,6 +745,87 @@ h3 {
   font-style: italic;
 }
 
+.debate-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.debate-header {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.debate-header > div,
+.debate-topic,
+.transcript-panel {
+  background: #fffdf9;
+  border: 1px solid #ded2c4;
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.room-code-label {
+  margin: 0 0 8px 0;
+  color: #948a76;
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.debate-topic {
+  margin-top: 16px;
+}
+
+.debate-topic p {
+  margin-bottom: 0;
+  color: #7a6154;
+}
+
+.transcript-panel {
+  margin-top: 16px;
+}
+
+.message-list {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message {
+  max-width: 78%;
+  padding: 12px 14px;
+  border: 1px solid #ded2c4;
+  border-radius: 6px;
+  background: #f5eee3;
+}
+
+.message p {
+  margin: 6px 0 0 0;
+}
+
+.own-message {
+  align-self: flex-end;
+  background: #ead8da;
+}
+
+.message-form {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.message-form input {
+  min-height: 54px;
+  padding: 0 16px;
+  border: 1px solid #d4c4b2;
+  border-radius: 4px;
+  background: #eee7dc;
+}
+
 @media (max-width: 640px) {
   .auth-page {
     padding: 1.25rem;
@@ -756,5 +837,14 @@ h3 {
 
   .brand-title {
     font-size: 2.7rem;
+  }
+
+  .debate-header,
+  .message-form {
+    grid-template-columns: 1fr;
+  }
+
+  .message {
+    max-width: 100%;
   }
 }
