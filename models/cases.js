@@ -11,11 +11,11 @@ const Case = sequelize.define("Case", {
     allowNull: true,
   },
   userOneId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
   },
   userTwoId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: true,
   },
   userOneSide: {
@@ -32,7 +32,7 @@ const Case = sequelize.define("Case", {
     defaultValue: "waiting",
   },
   winnerUserId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: true,
   },
   verdictSummary: {
@@ -41,11 +41,11 @@ const Case = sequelize.define("Case", {
   },
 });
 
-function linkCaseStuff({ User, Message }) {
+function linkCaseModels({ User, Message }) {
   Case.belongsTo(User, { foreignKey: "userOneId", as: "userOne" });
   Case.belongsTo(User, { foreignKey: "userTwoId", as: "userTwo" });
   Case.belongsTo(User, { foreignKey: "winnerUserId", as: "winner" });
   Case.hasMany(Message, { foreignKey: "caseId", as: "messages" });
 }
 
-module.exports = { Case, linkCaseStuff };
+module.exports = { Case, linkCaseModels };

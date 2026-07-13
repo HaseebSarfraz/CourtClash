@@ -4,17 +4,17 @@ const passport = require("passport");
 const router = express.Router();
 
 const startGoogleAuth = passport.authenticate("google", {
-  scope: ["profile", "email"]
+  scope: ["profile", "email"],
 });
 
 const handleGoogleCallback = passport.authenticate("google", {
-  failureRedirect: "http://localhost:5173?authError=google"
+  failureRedirect: "http://localhost:5173?authError=google",
 });
 
 router.get("/google", startGoogleAuth);
 
 router.get("/google/callback", handleGoogleCallback, (req, res) => {
-  res.redirect("http://localhost:5173"); // attaches user to req.user and redirects to the home page
+  res.redirect("http://localhost:5173");
 });
 
 router.get("/me", (req, res) => {
@@ -37,4 +37,12 @@ router.post("/logout", (req, res, next) => {
   });
 });
 
-module.exports = router;
+function requireAuth(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  next();
+}
+
+module.exports = { router, requireAuth };

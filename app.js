@@ -6,30 +6,36 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
 const { sequelize } = require("./datasource");
-const { User, linkUserStuff } = require("./models/users");
-const { Case, linkCaseStuff } = require("./models/cases");
-const { Message, linkMessageStuff } = require("./models/debate_messages");
-
-const dbStuff = { User, Case, Message };
-linkUserStuff(dbStuff);
-linkCaseStuff(dbStuff);
-linkMessageStuff(dbStuff);
-
-
-const authRouter = require("./routers/auth_router");
 
 dotenv.config();
 
+const { User, linkUserModels } = require("./models/users");
+const { Case, linkCaseModels } = require("./models/cases");
+const { Message, linkMessageModels } = require("./models/debate_messages");
+const { router: authRouter } = require("./routers/auth_router");
+const checkoutRouter = require("./routers/checkout");
+const webhookRouter = require("./routers/webhooks");
+const { router: aiRouter, getAiRuling } = require("./routers/ai_router");
+
+const dbStuff = { User, Case, Message };
+linkUserModels(dbStuff);
+linkCaseModels(dbStuff);
+linkMessageModels(dbStuff);
+
 const app = express();
-app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const middleware = session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
 });
 
+app.use(
+  "/api/webhooks/stripe",
+  express.raw({ type: "application/json" }),
+  webhookRouter,
+);
 app.use(express.json());
 app.use(middleware);
 app.use(passport.initialize());
@@ -58,12 +64,10 @@ passport.use(
         }
 
         if (!email) {
-          return done(new Error("Google account did not provide an email"), null);
-        }
-
-        let picture = null;
-        if (profile.photos && profile.photos.length > 0) {
-          picture = profile.photos[0].value;
+          return done(
+            new Error("Google account did not provide an email"),
+            null,
+          );
         }
 
         let user = await User.findOne({
@@ -82,12 +86,14 @@ passport.use(
       } catch (error) {
         done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 app.use(express.static("static"));
 app.use("/auth", authRouter);
+app.use("/ai", aiRouter);
+app.use("/api", checkoutRouter);
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -152,6 +158,18 @@ async function getState(debateCase) {
 
 function userInRoom(debateCase, userId) {
   return debateCase.userOneId === userId || debateCase.userTwoId === userId;
+}
+
+function getPlayerName(debateCase, userId) {
+  if (debateCase.userOneId === userId) {
+    return "Player A";
+  }
+
+  if (debateCase.userTwoId === userId) {
+    return "Player B";
+  }
+
+  return "Unknown";
 }
 
 io.use((socket, next) => {
@@ -248,7 +266,11 @@ io.on("connection", (socket) => {
       });
 
       const savedMessage = await Message.findByPk(message.id, {
-        include: { model: User, as: "user", attributes: ["id", "name", "email"] },
+        include: {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
       });
 
       io.to(roomCode).emit("room:message", {
@@ -263,6 +285,34 @@ io.on("connection", (socket) => {
       callback({ ok: true });
     } catch (error) {
       callback({ error: "Could not send message." });
+    }
+  });
+
+  socket.on("room:ruling", async (data, callback) => {
+    try {
+      const roomCode = data.roomCode.trim().toUpperCase();
+      const debateCase = await Case.findOne({ where: { roomCode } });
+
+      if (!debateCase || !userInRoom(debateCase, user.id)) {
+        return callback({ error: "Room problem." });
+      }
+
+      const messages = await Message.findAll({
+        where: { caseId: debateCase.id },
+        order: [["createdAt", "ASC"]],
+      });
+
+      const args = messages.map((message) => ({
+        speaker: getPlayerName(debateCase, message.userId),
+        text: message.content,
+      }));
+
+      const ruling = await getAiRuling(debateCase.topic, args);
+
+      io.to(roomCode).emit("room:ruling", ruling);
+      callback({ ok: true });
+    } catch (error) {
+      callback({ error: "Could not generate ruling." });
     }
   });
 });
@@ -280,8 +330,5 @@ async function startServer() {
     console.error("Unable to connect to the database:", error);
   }
 }
-
-const aiRouter = require("./routers/ai_router");
-app.use("/ai", aiRouter);
 
 startServer();

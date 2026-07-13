@@ -4,7 +4,7 @@ import {
   redirectToGoogle,
   logout,
   getCurrentUser,
-  generateRuling,
+  createCheckoutSession,
 } from "./api-service";
 
 export default function App() {
@@ -20,37 +20,27 @@ export default function App() {
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [rulingResult, setRulingResult] = useState("");
+  const [loadingPlan, setLoadingPlan] = useState(null);
 
   function handleGenerateRuling() {
-    if (!roomState || messages.length === 0) {
-      setRulingResult("There are no submitted arguments to judge yet.");
+    if (!socket || !roomState) {
       return;
     }
 
-    const argumentsList = messages.map(function (message) {
-      return {
-        speaker: getPlayerName(message.userId),
-        text: message.content,
-      };
-    });
-
     setRulingResult("");
 
-    generateRuling({
-      topic: roomState.topic,
-      argumentsList,
-    })
-      .then(function (data) {
-        if (data.error) {
-          setRulingResult(data.error);
+    socket.emit(
+      "room:ruling",
+      {
+        roomCode: roomState.roomCode,
+      },
+      function (response) {
+        if (response && response.error) {
+          setRulingResult(response.error);
           return;
         }
-
-        setRulingResult(`Winner: ${data.winner}\n\n${data.reasoning}`);
-      })
-      .catch(function () {
-        setRulingResult("Failed to generate ruling.");
-      });
+      },
+    );
   }
 
   function handleOpenCaseClick() {
@@ -111,7 +101,7 @@ export default function App() {
         userOneSide: formData.get("userOneSide"),
         userTwoSide: formData.get("userTwoSide"),
       },
-      handleRoomResponse
+      handleRoomResponse,
     );
   }
 
@@ -130,7 +120,7 @@ export default function App() {
       {
         roomCode: formData.get("roomCode"),
       },
-      handleRoomResponse
+      handleRoomResponse,
     );
   }
 
@@ -162,7 +152,7 @@ export default function App() {
         setRoomError("");
         setCurrentTranscript("");
         setRulingResult("");
-      }
+      },
     );
   }
 
@@ -189,6 +179,18 @@ export default function App() {
   function handleResetCapture() {
     setCurrentTranscript("");
     setIsRecording(false);
+  }
+  function handleGetStarted(plan) {
+    setLoadingPlan(plan);
+
+    createCheckoutSession(plan).then(function (data) {
+      if (data.error) {
+        setLoadingPlan(null);
+        return;
+      }
+
+      window.location.href = data.url;
+    });
   }
 
   useEffect(function () {
@@ -240,51 +242,58 @@ export default function App() {
     setRecognition(recognitionInstance);
   }, []);
 
-  useEffect(function () {
-    if (!currentUser) {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-      }
-      return;
-    }
-
-    const nextSocket = io({
-      withCredentials: true,
-    });
-
-    nextSocket.on("connect_error", function (error) {
-      setRoomError(error.message);
-    });
-
-    nextSocket.on("room:state", function (state) {
-      setRoomState(state.room);
-      setMessages(state.messages);
-      setCurrentPopup(null);
-      setCurrentPage("debate");
-    });
-
-    nextSocket.on("room:message", function (message) {
-      setRulingResult("");
-      setMessages(function (currentMessages) {
-        const alreadyAdded = currentMessages.some(function (currentMessage) {
-          return currentMessage.id === message.id;
-        });
-
-        if (alreadyAdded) {
-          return currentMessages;
+  useEffect(
+    function () {
+      if (!currentUser) {
+        if (socket) {
+          socket.disconnect();
+          setSocket(null);
         }
+        return;
+      }
 
-        return [...currentMessages, message];
+      const nextSocket = io({
+        withCredentials: true,
       });
-    });
 
-    setSocket(nextSocket);
+      nextSocket.on("connect_error", function (error) {
+        setRoomError(error.message);
+      });
 
-    return function () {
-      nextSocket.disconnect();
-    };
-  }, [currentUser]);
+      nextSocket.on("room:state", function (state) {
+        setRoomState(state.room);
+        setMessages(state.messages);
+        setCurrentPopup(null);
+        setCurrentPage("debate");
+      });
+
+      nextSocket.on("room:message", function (message) {
+        setRulingResult("");
+        setMessages(function (currentMessages) {
+          const alreadyAdded = currentMessages.some(function (currentMessage) {
+            return currentMessage.id === message.id;
+          });
+
+          if (alreadyAdded) {
+            return currentMessages;
+          }
+
+          return [...currentMessages, message];
+        });
+      });
+
+      nextSocket.on("room:ruling", function (ruling) {
+        setRulingResult(`Winner: ${ruling.winner}\n\n${ruling.reasoning}`);
+      });
+
+      setSocket(nextSocket);
+
+      return function () {
+        nextSocket.disconnect();
+      };
+    },
+    [currentUser],
+  );
 
   const mySide =
     roomState && currentUser && roomState.userOneId === currentUser.id
@@ -362,8 +371,8 @@ export default function App() {
               {authError && <p className="auth-error">{authError}</p>}
 
               <p className="auth-helper">
-                Sign in securely with your Google account to access the CourtClash
-                debate chamber.
+                Sign in securely with your Google account to access the
+                CourtClash debate chamber.
               </p>
             </section>
           </section>
@@ -401,7 +410,6 @@ export default function App() {
               >
                 <p>Pricing</p>
               </div>
-
             </div>
 
             <div className="username">
@@ -569,7 +577,15 @@ export default function App() {
                   <p>&#10003; Sessions capped at 15 minutes</p>
                   <p>&#10003; Access to curated debate topics</p>
                 </div>
-                <button className="get-started">Get Started</button>
+                <button
+                  className="get-started"
+                  id="basic-btn"
+                  type="button"
+                  onClick={() => handleGetStarted("basic")}
+                  disabled={loadingPlan === "basic"}
+                >
+                  {loadingPlan === "basic" ? "Loading..." : "Get Started"}
+                </button>
               </div>
 
               <div className="models">
@@ -592,7 +608,15 @@ export default function App() {
                   <p>&#10003; Full access to exclusive and premium topics</p>
                   <p>&#10003; Priority matchmaking with top-tier debaters</p>
                 </div>
-                <button className="get-started">Get Started</button>
+                <button
+                  className="get-started"
+                  id="premium-btn"
+                  type="button"
+                  onClick={() => handleGetStarted("premium")}
+                  disabled={loadingPlan === "premium"}
+                >
+                  {loadingPlan === "premium" ? "Loading..." : "Get Started"}
+                </button>
               </div>
             </div>
           )}
@@ -633,9 +657,7 @@ export default function App() {
                         }
                         key={message.id}
                       >
-                        <strong>
-                          {getPlayerName(message.userId)}
-                        </strong>
+                        <strong>{getPlayerName(message.userId)}</strong>
                         <span className="message-meta">
                           {message.user ? message.user.email : "Unknown user"}
                         </span>
@@ -662,7 +684,9 @@ export default function App() {
                   <div className="argument-counts">
                     <span>Player A: {playerOneCount} / 4</span>
                     <span>Player B: {playerTwoCount} / 4</span>
-                    <span>Total: {messages.length} / {maxTotal}</span>
+                    <span>
+                      Total: {messages.length} / {maxTotal}
+                    </span>
                   </div>
                 </div>
 
@@ -696,7 +720,9 @@ export default function App() {
                     <textarea
                       id="transcript-box"
                       value={currentTranscript}
-                      onChange={(event) => setCurrentTranscript(event.target.value)}
+                      onChange={(event) =>
+                        setCurrentTranscript(event.target.value)
+                      }
                       placeholder="Record or type one argument here..."
                       rows="5"
                       disabled={!canRecordArgument}
@@ -743,7 +769,9 @@ export default function App() {
                   {rulingResult ? (
                     <pre>{rulingResult}</pre>
                   ) : (
-                    <p>Submit arguments, then generate a ruling from the record.</p>
+                    <p>
+                      Submit arguments, then generate a ruling from the record.
+                    </p>
                   )}
                 </div>
               </section>

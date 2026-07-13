@@ -7,7 +7,7 @@ const Message = sequelize.define("DebateMessage", {
     allowNull: false,
   },
   userId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
   },
   content: {
@@ -16,9 +16,9 @@ const Message = sequelize.define("DebateMessage", {
   },
 });
 
-function linkMessageStuff({ Case, User }) {
+function linkMessageModels({ Case, User }) {
   Message.belongsTo(Case, { foreignKey: "caseId", as: "case" });
   Message.belongsTo(User, { foreignKey: "userId", as: "user" });
 }
 
-module.exports = { Message, linkMessageStuff };
+module.exports = { Message, linkMessageModels };

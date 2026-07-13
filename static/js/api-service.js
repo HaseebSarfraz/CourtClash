@@ -16,13 +16,11 @@ export function getCurrentUser() {
   }).then((res) => res.json());
 }
 
-export function generateRuling(payload) {
-  return fetch("/ai/ruling", {
+export function createCheckoutSession(plan) {
+  return fetch("/api/create-checkout-session", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan }),
     credentials: "include",
-    body: JSON.stringify(payload),
   }).then((res) => res.json());
 }

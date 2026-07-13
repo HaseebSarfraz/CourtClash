@@ -3,33 +3,22 @@ const OpenAI = require("openai");
 
 const router = express.Router();
 
-router.post("/ruling", async (req, res) => {
-  try {
-    const { topic, argumentsList } = req.body;
+async function getAiRuling(topic, argumentsList) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("Missing OpenAI key");
+  }
 
-    if (!topic || !argumentsList || !Array.isArray(argumentsList)) {
-      return res.status(400).json({
-        error: "Topic and argumentsList are required.",
-      });
-    }
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({
-        error: "OpenAI API key is not configured.",
-      });
-    }
+  const formattedArguments = argumentsList
+    .map((argument, index) => {
+      return `Turn ${index + 1} - ${argument.speaker}: ${argument.text}`;
+    })
+    .join("\n");
 
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const formattedArguments = argumentsList
-      .map((argument, index) => {
-        return `Turn ${index + 1} - ${argument.speaker}: ${argument.text}`;
-      })
-      .join("\n");
-
-    const prompt = `
+  const prompt = `
 You are an impartial debate judge.
 
 Debate topic:
@@ -52,13 +41,25 @@ Your job:
 If neither side clearly wins, set winner to "Tie".
 `;
 
-    const response = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input: prompt,
-    });
+  const response = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: prompt,
+  });
 
-    const rawText = response.output_text;
-    const parsed = JSON.parse(rawText);
+  return JSON.parse(response.output_text);
+}
+
+router.post("/ruling", async (req, res) => {
+  try {
+    const { topic, argumentsList } = req.body;
+
+    if (!topic || !argumentsList || !Array.isArray(argumentsList)) {
+      return res.status(400).json({
+        error: "Topic and argumentsList are required.",
+      });
+    }
+
+    const parsed = await getAiRuling(topic, argumentsList);
 
     return res.status(200).json(parsed);
   } catch (error) {
@@ -69,4 +70,4 @@ If neither side clearly wins, set winner to "Tie".
   }
 });
 
-module.exports = router;
+module.exports = { router, getAiRuling };
