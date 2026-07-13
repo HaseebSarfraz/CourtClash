@@ -15,3 +15,14 @@ export function getCurrentUser() {
     credentials: "include",
   }).then((res) => res.json());
 }
+
+export function generateRuling(payload) {
+  return fetch("/ai/ruling", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  }).then((res) => res.json());
+}

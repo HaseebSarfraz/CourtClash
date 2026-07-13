@@ -24,6 +24,7 @@ const authRouter = require("./routers/auth_router");
 dotenv.config();
 
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const middleware = session({
@@ -274,5 +275,8 @@ async function startServer() {
     console.error("Unable to connect to the database:", error);
   }
 }
+
+const aiRouter = require("./routers/ai_router");
+app.use("/ai", aiRouter);
 
 startServer();
