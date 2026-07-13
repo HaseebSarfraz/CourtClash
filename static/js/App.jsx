@@ -177,6 +177,10 @@ export default function App() {
   }
 
   function handleResetCapture() {
+    if (recognition && isRecording) {
+      recognition.stop();
+    }
+
     setCurrentTranscript("");
     setIsRecording(false);
   }
@@ -302,8 +306,8 @@ export default function App() {
         ? roomState.userTwoSide
         : "";
 
-  const maxPerPlayer = 4;
-  const maxTotal = 8;
+  const maxPerPlayer = 3;
+  const maxTotal = maxPerPlayer * 2;
   const playerOneCount = roomState
     ? messages.filter(function (message) {
         return message.userId === roomState.userOneId;
@@ -682,8 +686,12 @@ export default function App() {
                   </div>
 
                   <div className="argument-counts">
-                    <span>Player A: {playerOneCount} / 4</span>
-                    <span>Player B: {playerTwoCount} / 4</span>
+                    <span>
+                      Player A: {playerOneCount} / {maxPerPlayer}
+                    </span>
+                    <span>
+                      Player B: {playerTwoCount} / {maxPerPlayer}
+                    </span>
                     <span>
                       Total: {messages.length} / {maxTotal}
                     </span>
@@ -731,7 +739,7 @@ export default function App() {
 
                   {hitMyLimit && (
                     <p className="auth-error">
-                      You have submitted all 4 of your arguments.
+                      You have submitted all {maxPerPlayer} of your arguments.
                     </p>
                   )}
 
