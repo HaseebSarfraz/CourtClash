@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [react],
+  plugins: [react()],
   root: "static",
   server: {
     port: 5173,
@@ -15,9 +15,10 @@ export default defineConfig({
         target: "http://localhost:3000",
         ws: true,
         changeOrigin: true,
+      },
       "/ai": {
-      target: "http://localhost:3000",
-      changeOrigin: true,
+        target: "http://localhost:3000",
+        changeOrigin: true,
       },
     },
   },

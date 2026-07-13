@@ -6,17 +6,14 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { Server } = require("socket.io");
 const dotenv = require("dotenv");
 const { sequelize } = require("./datasource");
-const { User, associateUserModels } = require("./models/users");
-const { Case, associateCaseModels } = require("./models/cases");
-const {
-  DebateMessage,
-  associateDebateMessageModels,
-} = require("./models/debate_messages");
+const { User, linkUserStuff } = require("./models/users");
+const { Case, linkCaseStuff } = require("./models/cases");
+const { Message, linkMessageStuff } = require("./models/debate_messages");
 
-const allModels = { User, Case, DebateMessage };
-associateUserModels(allModels);
-associateCaseModels(allModels);
-associateDebateMessageModels(allModels);
+const dbStuff = { User, Case, Message };
+linkUserStuff(dbStuff);
+linkCaseStuff(dbStuff);
+linkMessageStuff(dbStuff);
 
 
 const authRouter = require("./routers/auth_router");
@@ -134,7 +131,7 @@ function cleanCase(debateCase) {
 }
 
 async function getState(debateCase) {
-  const messages = await DebateMessage.findAll({
+  const messages = await Message.findAll({
     where: { caseId: debateCase.id },
     include: { model: User, as: "user", attributes: ["id", "name", "email"] },
     order: [["createdAt", "ASC"]],
@@ -236,13 +233,21 @@ io.on("connection", (socket) => {
         return callback({ error: "Message cannot be empty." });
       }
 
-      const message = await DebateMessage.create({
+      const messageCount = await Message.count({
+        where: { caseId: debateCase.id, userId: user.id },
+      });
+
+      if (messageCount >= 4) {
+        return callback({ error: "You have already submitted 4 arguments." });
+      }
+
+      const message = await Message.create({
         caseId: debateCase.id,
         userId: user.id,
         content,
       });
 
-      const savedMessage = await DebateMessage.findByPk(message.id, {
+      const savedMessage = await Message.findByPk(message.id, {
         include: { model: User, as: "user", attributes: ["id", "name", "email"] },
       });
 

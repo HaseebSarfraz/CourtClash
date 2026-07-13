@@ -16,41 +16,42 @@ export default function App() {
   const [roomState, setRoomState] = useState(null);
   const [messages, setMessages] = useState([]);
   const [roomError, setRoomError] = useState("");
-  const [messageText, setMessageText] = useState("");
   const [recognition, setRecognition] = useState(null);
-
-  const [currentSpeaker, setCurrentSpeaker] = useState("Player A");
   const [currentTranscript, setCurrentTranscript] = useState("");
-  const [submittedArguments, setSubmittedArguments] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
   const [rulingResult, setRulingResult] = useState("");
-  const [debateTopic, setDebateTopic] = useState("Is Ronaldo better than Messi?");
-
-
-  const maxArguments = 8;
-  const hasReachedLimit = submittedArguments.length >= maxArguments;
-  const canGenerateRuling = submittedArguments.length === maxArguments;
-  const canSubmitArgument = currentTranscript.trim() !== "" && !hasReachedLimit;
-  
 
   function handleGenerateRuling() {
-  if (submittedArguments.length !== 8) {
-    setRulingResult("Ruling can only be generated after 8 submitted arguments.");
-    return;
-  }
-
-  generateRuling({
-    topic: debateTopic,
-    argumentsList: submittedArguments,
-  }).then(function (data) {
-    if (data.error) {
-      setRulingResult(data.error);
+    if (!roomState || messages.length === 0) {
+      setRulingResult("There are no submitted arguments to judge yet.");
       return;
     }
 
-    setRulingResult(`Winner: ${data.winner}\n\n${data.reasoning}`);
-  });
-}
+    const argumentsList = messages.map(function (message) {
+      return {
+        speaker: getPlayerName(message.userId),
+        text: message.content,
+      };
+    });
+
+    setRulingResult("");
+
+    generateRuling({
+      topic: roomState.topic,
+      argumentsList,
+    })
+      .then(function (data) {
+        if (data.error) {
+          setRulingResult(data.error);
+          return;
+        }
+
+        setRulingResult(`Winner: ${data.winner}\n\n${data.reasoning}`);
+      })
+      .catch(function () {
+        setRulingResult("Failed to generate ruling.");
+      });
+  }
 
   function handleOpenCaseClick() {
     setCurrentPopup("openCase");
@@ -86,6 +87,9 @@ export default function App() {
     setRoomError("");
     setRoomState(response.state.room);
     setMessages(response.state.messages);
+    setCurrentTranscript("");
+    setRulingResult("");
+    setIsRecording(false);
     setCurrentPopup(null);
     setCurrentPage("debate");
   }
@@ -130,10 +134,16 @@ export default function App() {
     );
   }
 
-  function handleSendMessage(event) {
+  function handleSubmitArgument(event) {
     event.preventDefault();
 
     if (!socket || !roomState) {
+      return;
+    }
+
+    const trimmedTranscript = currentTranscript.trim();
+
+    if (!trimmedTranscript || !canRecordArgument) {
       return;
     }
 
@@ -141,7 +151,7 @@ export default function App() {
       "room:message",
       {
         roomCode: roomState.roomCode,
-        content: messageText,
+        content: trimmedTranscript,
       },
       function (response) {
         if (response && response.error) {
@@ -150,120 +160,85 @@ export default function App() {
         }
 
         setRoomError("");
-        setMessageText("");
+        setCurrentTranscript("");
+        setRulingResult("");
       }
     );
   }
 
-  useEffect(function () {
-    getCurrentUser().then(function (data) {
-      setAuthError("");
-    });
-  }
-
   function handleStartRecording() {
-  if (!recognition) {
-    console.log("Speech recognition not available.");
-    return;
-  }
+    if (!recognition) {
+      console.log("Speech recognition not available.");
+      return;
+    }
 
-  setCurrentTranscript("");
-  setIsRecording(true);
-  recognition.start();
-}
+    setCurrentTranscript("");
+    setIsRecording(true);
+    recognition.start();
+  }
 
   function handleStopRecording() {
-  if (!recognition) {
-    return;
-  }
-
-  recognition.stop();
-  setIsRecording(false);
-}
-
-  function handleSubmitArgument() {
-    const trimmedTranscript = currentTranscript.trim();
-
-    if (!trimmedTranscript) {
+    if (!recognition) {
       return;
     }
 
-    const newArgument = {
-      id: Date.now(),
-      speaker: currentSpeaker,
-      text: trimmedTranscript,
+    recognition.stop();
+    setIsRecording(false);
+  }
+
+  function handleResetCapture() {
+    setCurrentTranscript("");
+    setIsRecording(false);
+  }
+
+  useEffect(function () {
+    getCurrentUser().then(function (data) {
+      if (!data.user) {
+        setCurrentUser(null);
+        setCurrentPage("auth");
+        return;
+      }
+
+      setCurrentUser(data.user);
+      setCurrentPage("lobby");
+    });
+  }, []);
+
+  useEffect(function () {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.log("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognitionInstance = new SpeechRecognition();
+    recognitionInstance.continuous = true;
+    recognitionInstance.interimResults = true;
+    recognitionInstance.lang = "en-US";
+
+    recognitionInstance.onresult = function (event) {
+      let transcript = "";
+
+      for (let i = 0; i < event.results.length; i += 1) {
+        transcript += event.results[i][0].transcript;
+      }
+
+      setCurrentTranscript(transcript);
     };
 
-    setSubmittedArguments(function (previousArguments) {
-      return [...previousArguments, newArgument];
-    });
+    recognitionInstance.onend = function () {
+      setIsRecording(false);
+    };
 
-    setCurrentTranscript("");
-    setRulingResult("");
+    recognitionInstance.onerror = function (event) {
+      console.log("Speech recognition error:", event.error);
+      setIsRecording(false);
+    };
 
-    if (currentSpeaker === "Player A") {
-      setCurrentSpeaker("Player B");
-    } else {
-      setCurrentSpeaker("Player A");
-    }
-  }
-
-  function handleClearDebate() {
-    setCurrentSpeaker("Player A");
-    setCurrentTranscript("");
-    setSubmittedArguments([]);
-    setIsRecording(false);
-    setRulingResult("");
-  }
-
-  useEffect(function () {
-  getCurrentUser().then(function (data) {
-    if (!data.user) {
-      setCurrentUser(null);
-      setCurrentPage("auth");
-      return;
-    }
-
-    setCurrentUser(data.user);
-    setCurrentPage("lobby");
-  });
-}, []);
-
-  useEffect(function () {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    console.log("Speech recognition is not supported in this browser.");
-    return;
-  }
-
-  const recognitionInstance = new SpeechRecognition();
-  recognitionInstance.continuous = true;
-  recognitionInstance.interimResults = true;
-  recognitionInstance.lang = "en-US";
-
-  recognitionInstance.onresult = function (event) {
-    let transcript = "";
-
-    for (let i = 0; i < event.results.length; i += 1) {
-      transcript += event.results[i][0].transcript;
-    }
-
-    setCurrentTranscript(transcript);
-  };
-
-  recognitionInstance.onend = function () {
-    setIsRecording(false);
-  };
-
-  recognitionInstance.onerror = function (event) {
-    console.log("Speech recognition error:", event.error);
-    setIsRecording(false);
-  };
-
-  setRecognition(recognitionInstance);
-}, []);
+    setRecognition(recognitionInstance);
+  }, []);
 
   useEffect(function () {
     if (!currentUser) {
@@ -290,6 +265,7 @@ export default function App() {
     });
 
     nextSocket.on("room:message", function (message) {
+      setRulingResult("");
       setMessages(function (currentMessages) {
         const alreadyAdded = currentMessages.some(function (currentMessage) {
           return currentMessage.id === message.id;
@@ -316,6 +292,45 @@ export default function App() {
       : roomState
         ? roomState.userTwoSide
         : "";
+
+  const maxPerPlayer = 4;
+  const maxTotal = 8;
+  const playerOneCount = roomState
+    ? messages.filter(function (message) {
+        return message.userId === roomState.userOneId;
+      }).length
+    : 0;
+  const playerTwoCount = roomState
+    ? messages.filter(function (message) {
+        return message.userId === roomState.userTwoId;
+      }).length
+    : 0;
+  const myCount =
+    roomState && currentUser && roomState.userOneId === currentUser.id
+      ? playerOneCount
+      : playerTwoCount;
+  const hitMyLimit = myCount >= maxPerPlayer;
+  const canRecordArgument =
+    roomState && roomState.status === "active" && !hitMyLimit;
+  const canSubmitArgument =
+    canRecordArgument && currentTranscript.trim().length > 0;
+  const canGenerateRuling = roomState && messages.length > 0;
+
+  function getPlayerName(userId) {
+    if (!roomState) {
+      return "Unknown";
+    }
+
+    if (userId === roomState.userOneId) {
+      return "Player A";
+    }
+
+    if (userId === roomState.userTwoId) {
+      return "Player B";
+    }
+
+    return "Unknown";
+  }
 
   return (
     <>
@@ -387,13 +402,6 @@ export default function App() {
                 <p>Pricing</p>
               </div>
 
-              <div
-                className="subscription-btn"
-                id="aiLab"
-                onClick={() => setCurrentPage("aiLab")}
-              >
-                <p>AI Lab</p>
-              </div>
             </div>
 
             <div className="username">
@@ -626,8 +634,11 @@ export default function App() {
                         key={message.id}
                       >
                         <strong>
-                          {message.user ? message.user.email : "Unknown user"}
+                          {getPlayerName(message.userId)}
                         </strong>
+                        <span className="message-meta">
+                          {message.user ? message.user.email : "Unknown user"}
+                        </span>
                         <p>{message.content}</p>
                       </article>
                     );
@@ -635,100 +646,73 @@ export default function App() {
                 </div>
 
                 {roomError && <p className="auth-error">{roomError}</p>}
-
-                <form className="message-form" onSubmit={handleSendMessage}>
-                  <input
-                    type="text"
-                    value={messageText}
-                    onChange={(event) => setMessageText(event.target.value)}
-                    placeholder="Add to the record..."
-                  />
-                  <button className="submit-button" type="submit">
-                    Send
-                  </button>
-                </form>
               </section>
-          {currentPage === "aiLab" && (
-            <div className="case-files-page" id="aiLabPage">
-              <h2>AI Lab</h2>
 
-              <div className="record-standing">
-                <h3>Voice Transcription + Ruling Test</h3>
-
-                <div className="history-list" style={{ gap: "20px" }}>
-                  <div className="history-card" style={{ alignItems: "stretch" }}>
-                    <div className="history-main">
-                      <label className="standing-label" htmlFor="debate-topic">
-                        Debate Topic
-                      </label>
-                      <input
-                        id="debate-topic"
-                        type="text"
-                        value={debateTopic}
-                        onChange={(event) => setDebateTopic(event.target.value)}
-                        style={{ padding: "12px", fontSize: "16px" }}
-                      />
-                    </div>
+              <section className="argument-panel">
+                <div className="argument-panel-header">
+                  <div>
+                    <h3>Voice Argument</h3>
+                    <p>
+                      {roomState.status === "active"
+                        ? `${currentUser ? getPlayerName(currentUser.id) : "You"}: ${myCount} / ${maxPerPlayer} submitted`
+                        : "Waiting for both debaters before recording begins."}
+                    </p>
                   </div>
 
-                  <div className="history-card" style={{ alignItems: "stretch" }}>
-                    <div className="history-main">
-                      <div className="history-topic">
-                        Current Speaker: {currentSpeaker}
-                      </div>
-                      <div className="history-meta">
-                        Submitted Arguments: {submittedArguments.length} / 8
-                      </div>
-                      <div className="history-meta">
-                        Recording Status: {isRecording ? "Recording..." : "Idle"}
-                      </div>
-                    </div>
-
-                    <div className="history-matchup">
-                      <button
-                        className="button primary-button"
-                        type="button"
-                        onClick={handleStartRecording}
-                        disabled={hasReachedLimit || isRecording}
-                      >
-                        Start Recording
-                      </button>
-
-                      <button
-                        className="button secondary-button"
-                        type="button"
-                        onClick={handleStopRecording}
-                        disabled={!isRecording}
-                      >
-                        Stop Recording
-                      </button>
-                    </div>
+                  <div className="argument-counts">
+                    <span>Player A: {playerOneCount} / 4</span>
+                    <span>Player B: {playerTwoCount} / 4</span>
+                    <span>Total: {messages.length} / {maxTotal}</span>
                   </div>
+                </div>
 
-                  <div className="history-card" style={{ alignItems: "stretch" }}>
-                    <div className="history-main">
-                      <label className="standing-label" htmlFor="transcript-box">
-                        Transcript Preview
-                      </label>
-                      <textarea
-                        id="transcript-box"
-                        value={currentTranscript}
-                        onChange={(event) => setCurrentTranscript(event.target.value)}
-                        placeholder="Transcribed speech will appear here..."
-                        rows="6"
-                        style={{ padding: "12px", fontSize: "16px", resize: "vertical" }}
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    className="history-card"
-                    style={{ justifyContent: "flex-start", gap: "12px" }}
+                <div className="voice-actions">
+                  <button
+                    className="button primary-button"
+                    type="button"
+                    onClick={handleStartRecording}
+                    disabled={!canRecordArgument || isRecording || !recognition}
                   >
+                    Start Recording
+                  </button>
+
+                  <button
+                    className="button secondary-button"
+                    type="button"
+                    onClick={handleStopRecording}
+                    disabled={!isRecording}
+                  >
+                    Stop Recording
+                  </button>
+
+                  <span className="recording-status">
+                    {isRecording ? "Recording..." : "Idle"}
+                  </span>
+                </div>
+
+                <form className="argument-form" onSubmit={handleSubmitArgument}>
+                  <label className="field" htmlFor="transcript-box">
+                    <span>Transcript Preview</span>
+                    <textarea
+                      id="transcript-box"
+                      value={currentTranscript}
+                      onChange={(event) => setCurrentTranscript(event.target.value)}
+                      placeholder="Record or type one argument here..."
+                      rows="5"
+                      disabled={!canRecordArgument}
+                    />
+                  </label>
+
+                  {hitMyLimit && (
+                    <p className="auth-error">
+                      You have submitted all 4 of your arguments.
+                    </p>
+                  )}
+
+                  <div className="argument-actions">
                     <button
-                      className="button primary-button"
-                      type="button"
-                      onClick={handleSubmitArgument}
+                      className="submit-button"
+                      type="submit"
                       disabled={!canSubmitArgument}
                     >
                       Submit Argument
@@ -737,9 +721,10 @@ export default function App() {
                     <button
                       className="button secondary-button"
                       type="button"
-                      onClick={handleClearDebate}
+                      onClick={handleResetCapture}
+                      disabled={!currentTranscript && !isRecording}
                     >
-                      Clear Debate
+                      Reset Capture
                     </button>
 
                     <button
@@ -751,45 +736,17 @@ export default function App() {
                       Generate Ruling
                     </button>
                   </div>
+                </form>
 
-                  <div className="history-section">
-                    <h3>Submitted Arguments</h3>
-                    <div className="history-list">
-                      {submittedArguments.length === 0 && (
-                        <p>No arguments submitted yet.</p>
-                      )}
-
-                      {submittedArguments.map(function (argument, index) {
-                        return (
-                          <div className="history-card" key={argument.id}>
-                            <div className="history-main">
-                              <div className="history-topic">
-                                Turn {index + 1}: {argument.speaker}
-                              </div>
-                              <div>{argument.text}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="history-section">
-                    <h3>AI Ruling Output</h3>
-                    <div className="history-list">
-                      <div className="history-card">
-                        <div className="history-main">
-                          {rulingResult ? (
-                            <div>{rulingResult}</div>
-                          ) : (
-                            <p>Ruling has not been generated yet.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="ruling-output">
+                  <h3>AI Ruling</h3>
+                  {rulingResult ? (
+                    <pre>{rulingResult}</pre>
+                  ) : (
+                    <p>Submit arguments, then generate a ruling from the record.</p>
+                  )}
                 </div>
-              </div>
+              </section>
             </div>
           )}
 

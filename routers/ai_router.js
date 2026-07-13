@@ -3,10 +3,6 @@ const OpenAI = require("openai");
 
 const router = express.Router();
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 router.post("/ruling", async (req, res) => {
   try {
     const { topic, argumentsList } = req.body;
@@ -16,6 +12,16 @@ router.post("/ruling", async (req, res) => {
         error: "Topic and argumentsList are required.",
       });
     }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: "OpenAI API key is not configured.",
+      });
+    }
+
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const formattedArguments = argumentsList
       .map((argument, index) => {

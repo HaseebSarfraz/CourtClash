@@ -783,8 +783,16 @@ h3 {
   color: #7a6154;
 }
 
-.transcript-panel {
+.transcript-panel,
+.argument-panel {
   margin-top: 16px;
+}
+
+.argument-panel {
+  background: #fffdf9;
+  border: 1px solid #ded2c4;
+  border-radius: 6px;
+  padding: 20px;
 }
 
 .message-list {
@@ -804,6 +812,13 @@ h3 {
 
 .message p {
   margin: 6px 0 0 0;
+}
+
+.message-meta {
+  display: block;
+  margin-top: 4px;
+  color: #948a76;
+  font-size: 12px;
 }
 
 .own-message {
@@ -826,6 +841,78 @@ h3 {
   background: #eee7dc;
 }
 
+.argument-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.argument-panel-header p {
+  margin-bottom: 0;
+  color: #7a6154;
+}
+
+.argument-counts,
+.voice-actions,
+.argument-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.argument-counts {
+  justify-content: flex-end;
+  color: #948a76;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.voice-actions,
+.argument-form,
+.ruling-output {
+  margin-top: 18px;
+}
+
+.recording-status {
+  color: #7a6154;
+  font-weight: bold;
+}
+
+.argument-form textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #d4c4b2;
+  border-radius: 4px;
+  background: #eee7dc;
+  color: #241813;
+  font-size: 16px;
+  resize: vertical;
+}
+
+.argument-form .submit-button {
+  width: auto;
+  min-width: 190px;
+}
+
+.ruling-output {
+  padding-top: 18px;
+  border-top: 1px solid #ded2c4;
+}
+
+.ruling-output pre {
+  margin: 12px 0 0 0;
+  white-space: pre-wrap;
+  font-family: var(--font-body);
+  color: #241813;
+}
+
+button:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 @media (max-width: 640px) {
   .auth-page {
     padding: 1.25rem;
@@ -840,8 +927,10 @@ h3 {
   }
 
   .debate-header,
-  .message-form {
+  .message-form,
+  .argument-panel-header {
     grid-template-columns: 1fr;
+    display: grid;
   }
 
   .message {

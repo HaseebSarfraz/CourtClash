@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../datasource");
 
-const DebateMessage = sequelize.define("DebateMessage", {
+const Message = sequelize.define("DebateMessage", {
   caseId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -16,9 +16,9 @@ const DebateMessage = sequelize.define("DebateMessage", {
   },
 });
 
-function associateDebateMessageModels({ Case, User }) {
-  DebateMessage.belongsTo(Case, { foreignKey: "caseId", as: "case" });
-  DebateMessage.belongsTo(User, { foreignKey: "userId", as: "user" });
+function linkMessageStuff({ Case, User }) {
+  Message.belongsTo(Case, { foreignKey: "caseId", as: "case" });
+  Message.belongsTo(User, { foreignKey: "userId", as: "user" });
 }
 
-module.exports = { DebateMessage, associateDebateMessageModels };
+module.exports = { Message, linkMessageStuff };
