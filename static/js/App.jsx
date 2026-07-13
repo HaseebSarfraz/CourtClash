@@ -3,6 +3,7 @@ import {
   redirectToGoogle,
   logout,
   getCurrentUser,
+  createCheckoutSession,
 } from "./api-service";
 
 export default function App() {
@@ -10,6 +11,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentPopup, setCurrentPopup] = useState(null);
   const [authError, setAuthError] = useState("");
+  const [loadingPlan, setLoadingPlan] = useState(null);
 
   function handleOpenCaseClick() {
     setCurrentPopup("openCase");
@@ -33,6 +35,17 @@ export default function App() {
       setCurrentPage("auth");
     });
   }
+
+  async function handleGetStarted(plan) {
+  setLoadingPlan(plan);
+  try {
+    const url = await createCheckoutSession(plan);
+    window.location.href = url;
+  } catch (err) {
+    alert('Something went wrong starting checkout. Please try again.');
+    setLoadingPlan(null);
+  }
+}
 
   useEffect(function () {
     getCurrentUser().then(function (data) {
@@ -290,7 +303,11 @@ export default function App() {
                   <p>&#10003; Sessions capped at 15 minutes</p>
                   <p>&#10003; Access to curated debate topics</p>
                 </div>
-                <button className="get-started">Get Started</button>
+                <button className="get-started" id="basic-btn"
+                  onClick={() => handleGetStarted('basic')}
+                  disabled={loadingPlan === 'basic'}>
+                  {loadingPlan === 'basic' ? 'Loading...' : 'Get Started'}
+                </button>
               </div>
 
               <div className="models">
@@ -315,7 +332,12 @@ export default function App() {
                     &#10003; Priority matchmaking with top-tier debaters
                   </p>
                 </div>
-                <button className="get-started">Get Started</button>
+                <button
+                className="get-started" id="premium-btn"
+                onClick={() => handleGetStarted('premium')}
+                disabled={loadingPlan === 'premium'}>
+                {loadingPlan === 'premium' ? 'Loading...' : 'Get Started'}
+              </button>
               </div>
             </div>
           )}

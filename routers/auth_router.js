@@ -37,4 +37,12 @@ router.post("/logout", (req, res, next) => {
   });
 });
 
-module.exports = router;
+//stripe
+function requireAuth(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  next();
+}
+
+module.exports = { router, requireAuth };

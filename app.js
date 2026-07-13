@@ -6,6 +6,7 @@ const dotenv = require("dotenv");
 const { sequelize } = require("./datasource");
 const { User } = require("./models/users");
 const { Case } = require("./models/cases");
+const { router: authRouter } = require('./routers/auth_router');
 
 User.hasMany(Case, { foreignKey: "userOneId", as: "casesAsUserOne" });
 User.hasMany(Case, { foreignKey: "userTwoId", as: "casesAsUserTwo" });
@@ -14,9 +15,6 @@ User.hasMany(Case, { foreignKey: "winnerUserId", as: "wonCases" });
 Case.belongsTo(User, { foreignKey: "userOneId", as: "userOne" });
 Case.belongsTo(User, { foreignKey: "userTwoId", as: "userTwo" });
 Case.belongsTo(User, { foreignKey: "winnerUserId", as: "winner" });
-
-
-const authRouter = require("./routers/auth_router");
 
 dotenv.config();
 
@@ -86,7 +84,9 @@ passport.use(
 );
 
 app.use(express.static("static"));
-app.use("/auth", authRouter);
+
+
+app.use('/auth', authRouter);
 
 async function startServer() {
   try {
@@ -101,5 +101,13 @@ async function startServer() {
     console.error("Unable to connect to the database:", error);
   }
 }
+
+// stripe 
+// Webhook route FIRST, with raw body — before express.json()
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }), require('./routers/webhooks'));
+
+// Now the rest of your app can use JSON parsing normally
+app.use(express.json());
+app.use('/api', require('./routers/checkout'));
 
 startServer();
