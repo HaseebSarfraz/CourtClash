@@ -3,6 +3,7 @@ import {
   redirectToGoogle,
   logout,
   getCurrentUser,
+  generateRuling,
 } from "./api-service";
 
 export default function App() {
@@ -10,6 +11,40 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentPopup, setCurrentPopup] = useState(null);
   const [authError, setAuthError] = useState("");
+  const [recognition, setRecognition] = useState(null);
+
+  const [currentSpeaker, setCurrentSpeaker] = useState("Player A");
+  const [currentTranscript, setCurrentTranscript] = useState("");
+  const [submittedArguments, setSubmittedArguments] = useState([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [rulingResult, setRulingResult] = useState("");
+  const [debateTopic, setDebateTopic] = useState("Is Ronaldo better than Messi?");
+
+
+  const maxArguments = 8;
+  const hasReachedLimit = submittedArguments.length >= maxArguments;
+  const canGenerateRuling = submittedArguments.length === maxArguments;
+  const canSubmitArgument = currentTranscript.trim() !== "" && !hasReachedLimit;
+  
+
+  function handleGenerateRuling() {
+  if (submittedArguments.length !== 8) {
+    setRulingResult("Ruling can only be generated after 8 submitted arguments.");
+    return;
+  }
+
+  generateRuling({
+    topic: debateTopic,
+    argumentsList: submittedArguments,
+  }).then(function (data) {
+    if (data.error) {
+      setRulingResult(data.error);
+      return;
+    }
+
+    setRulingResult(`Winner: ${data.winner}\n\n${data.reasoning}`);
+  });
+}
 
   function handleOpenCaseClick() {
     setCurrentPopup("openCase");
@@ -31,28 +66,113 @@ export default function App() {
     logout().then(function () {
       setCurrentUser(null);
       setCurrentPage("auth");
+      setAuthError("");
     });
   }
 
-  useEffect(function () {
-    getCurrentUser().then(function (data) {
+  function handleStartRecording() {
+  if (!recognition) {
+    console.log("Speech recognition not available.");
+    return;
+  }
 
-      const params = new URLSearchParams(window.location.search);
-      const authErrorFromUrl = params.get("authError");
+  setCurrentTranscript("");
+  setIsRecording(true);
+  recognition.start();
+}
 
-      if (authErrorFromUrl === "google") {
-        setAuthError("Google sign-in failed. Please try again.");
-      }
+  function handleStopRecording() {
+  if (!recognition) {
+    return;
+  }
 
-      if (!data.user) {
-        setCurrentUser(null);
-        setCurrentPage("auth");
-        return;
-      }
-      setCurrentUser(data.user);
-      setCurrentPage("lobby");
+  recognition.stop();
+  setIsRecording(false);
+}
+
+  function handleSubmitArgument() {
+    const trimmedTranscript = currentTranscript.trim();
+
+    if (!trimmedTranscript) {
+      return;
+    }
+
+    const newArgument = {
+      id: Date.now(),
+      speaker: currentSpeaker,
+      text: trimmedTranscript,
+    };
+
+    setSubmittedArguments(function (previousArguments) {
+      return [...previousArguments, newArgument];
     });
-  }, []);
+
+    setCurrentTranscript("");
+    setRulingResult("");
+
+    if (currentSpeaker === "Player A") {
+      setCurrentSpeaker("Player B");
+    } else {
+      setCurrentSpeaker("Player A");
+    }
+  }
+
+  function handleClearDebate() {
+    setCurrentSpeaker("Player A");
+    setCurrentTranscript("");
+    setSubmittedArguments([]);
+    setIsRecording(false);
+    setRulingResult("");
+  }
+
+  useEffect(function () {
+  getCurrentUser().then(function (data) {
+    if (!data.user) {
+      setCurrentUser(null);
+      setCurrentPage("auth");
+      return;
+    }
+
+    setCurrentUser(data.user);
+    setCurrentPage("lobby");
+  });
+}, []);
+
+  useEffect(function () {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    console.log("Speech recognition is not supported in this browser.");
+    return;
+  }
+
+  const recognitionInstance = new SpeechRecognition();
+  recognitionInstance.continuous = true;
+  recognitionInstance.interimResults = true;
+  recognitionInstance.lang = "en-US";
+
+  recognitionInstance.onresult = function (event) {
+    let transcript = "";
+
+    for (let i = 0; i < event.results.length; i += 1) {
+      transcript += event.results[i][0].transcript;
+    }
+
+    setCurrentTranscript(transcript);
+  };
+
+  recognitionInstance.onend = function () {
+    setIsRecording(false);
+  };
+
+  recognitionInstance.onerror = function (event) {
+    console.log("Speech recognition error:", event.error);
+    setIsRecording(false);
+  };
+
+  setRecognition(recognitionInstance);
+}, []);
 
   return (
     <>
@@ -122,6 +242,14 @@ export default function App() {
                 onClick={() => setCurrentPage("pricing")}
               >
                 <p>Pricing</p>
+              </div>
+
+              <div
+                className="subscription-btn"
+                id="aiLab"
+                onClick={() => setCurrentPage("aiLab")}
+              >
+                <p>AI Lab</p>
               </div>
             </div>
 
@@ -311,11 +439,154 @@ export default function App() {
                   <p>&#10003; Debate with members and non-members alike</p>
                   <p>&#10003; Unlimited daily debates</p>
                   <p>&#10003; Full access to exclusive and premium topics</p>
-                  <p>
-                    &#10003; Priority matchmaking with top-tier debaters
-                  </p>
+                  <p>&#10003; Priority matchmaking with top-tier debaters</p>
                 </div>
                 <button className="get-started">Get Started</button>
+              </div>
+            </div>
+          )}
+
+          {currentPage === "aiLab" && (
+            <div className="case-files-page" id="aiLabPage">
+              <h2>AI Lab</h2>
+
+              <div className="record-standing">
+                <h3>Voice Transcription + Ruling Test</h3>
+
+                <div className="history-list" style={{ gap: "20px" }}>
+                  <div className="history-card" style={{ alignItems: "stretch" }}>
+                    <div className="history-main">
+                      <label className="standing-label" htmlFor="debate-topic">
+                        Debate Topic
+                      </label>
+                      <input
+                        id="debate-topic"
+                        type="text"
+                        value={debateTopic}
+                        onChange={(event) => setDebateTopic(event.target.value)}
+                        style={{ padding: "12px", fontSize: "16px" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="history-card" style={{ alignItems: "stretch" }}>
+                    <div className="history-main">
+                      <div className="history-topic">
+                        Current Speaker: {currentSpeaker}
+                      </div>
+                      <div className="history-meta">
+                        Submitted Arguments: {submittedArguments.length} / 8
+                      </div>
+                      <div className="history-meta">
+                        Recording Status: {isRecording ? "Recording..." : "Idle"}
+                      </div>
+                    </div>
+
+                    <div className="history-matchup">
+                      <button
+                        className="button primary-button"
+                        type="button"
+                        onClick={handleStartRecording}
+                        disabled={hasReachedLimit || isRecording}
+                      >
+                        Start Recording
+                      </button>
+
+                      <button
+                        className="button secondary-button"
+                        type="button"
+                        onClick={handleStopRecording}
+                        disabled={!isRecording}
+                      >
+                        Stop Recording
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="history-card" style={{ alignItems: "stretch" }}>
+                    <div className="history-main">
+                      <label className="standing-label" htmlFor="transcript-box">
+                        Transcript Preview
+                      </label>
+                      <textarea
+                        id="transcript-box"
+                        value={currentTranscript}
+                        onChange={(event) => setCurrentTranscript(event.target.value)}
+                        placeholder="Transcribed speech will appear here..."
+                        rows="6"
+                        style={{ padding: "12px", fontSize: "16px", resize: "vertical" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    className="history-card"
+                    style={{ justifyContent: "flex-start", gap: "12px" }}
+                  >
+                    <button
+                      className="button primary-button"
+                      type="button"
+                      onClick={handleSubmitArgument}
+                      disabled={!canSubmitArgument}
+                    >
+                      Submit Argument
+                    </button>
+
+                    <button
+                      className="button secondary-button"
+                      type="button"
+                      onClick={handleClearDebate}
+                    >
+                      Clear Debate
+                    </button>
+
+                    <button
+                      className="button primary-button"
+                      type="button"
+                      onClick={handleGenerateRuling}
+                      disabled={!canGenerateRuling}
+                    >
+                      Generate Ruling
+                    </button>
+                  </div>
+
+                  <div className="history-section">
+                    <h3>Submitted Arguments</h3>
+                    <div className="history-list">
+                      {submittedArguments.length === 0 && (
+                        <p>No arguments submitted yet.</p>
+                      )}
+
+                      {submittedArguments.map(function (argument, index) {
+                        return (
+                          <div className="history-card" key={argument.id}>
+                            <div className="history-main">
+                              <div className="history-topic">
+                                Turn {index + 1}: {argument.speaker}
+                              </div>
+                              <div>{argument.text}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="history-section">
+                    <h3>AI Ruling Output</h3>
+                    <div className="history-list">
+                      <div className="history-card">
+                        <div className="history-main">
+                          {rulingResult ? (
+                            <div>{rulingResult}</div>
+                          ) : (
+                            <p>Ruling has not been generated yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -362,7 +633,7 @@ export default function App() {
                     </label>
                   </div>
 
-                  <button className="submit-button" type="submit">
+                  <button className="button primary-button" type="submit">
                     Convene the Court
                   </button>
                 </form>
@@ -394,14 +665,10 @@ export default function App() {
                 <form className="case-form">
                   <label className="field">
                     <span>Case Number</span>
-                    <input
-                      className="case-code-input"
-                      type="text"
-                      placeholder="ABC123"
-                    />
+                    <input type="text" placeholder="ABC123" />
                   </label>
 
-                  <button className="submit-button" type="submit">
+                  <button className="button primary-button" type="submit">
                     Take the Stand
                   </button>
                 </form>
