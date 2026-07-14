@@ -5,7 +5,7 @@ const Message = sequelize.define("DebateMessage", {
   caseId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-  },
+  }, 
   userId: {
     type: DataTypes.UUID,
     allowNull: false,
