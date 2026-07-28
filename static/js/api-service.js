@@ -37,7 +37,7 @@ export function createCheckoutSession(plan) {
 }
 
 export function generateRuling(roomCode) {
-  return fetch("/api/ruling", {
+  return fetch("/ai/ruling", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomCode }),
