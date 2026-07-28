@@ -39,6 +39,22 @@ const Case = sequelize.define("Case", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  userOneScore: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  userTwoScore: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  ruling: {
+    type: DataTypes.JSON,
+    allowNull: true,
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 });
 
 function linkCaseModels({ User, Message, DebateAnalysis}) {

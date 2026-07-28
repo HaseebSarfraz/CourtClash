@@ -4,8 +4,78 @@ import {
   redirectToGoogle,
   logout,
   getCurrentUser,
+  getCaseHistory,
   createCheckoutSession,
 } from "./api-service";
+
+const HISTORY_PAGE_SIZE = 10;
+
+const EMPTY_STANDING = {
+  heard: 0,
+  won: 0,
+  lost: 0,
+  tied: 0,
+  pending: 0,
+  winRate: 0,
+};
+
+function getResultLabel(result) {
+  if (result === "won") {
+    return "Won";
+  }
+
+  if (result === "lost") {
+    return "Lost";
+  }
+
+  if (result === "tied") {
+    return "Tied";
+  }
+
+  return "Pending";
+}
+
+function formatCaseDate(value) {
+  if (!value) {
+    return "Date unknown";
+  }
+
+  const date = new Date(value);
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function buildSideLabel(name, side) {
+  if (!side) {
+    return name;
+  }
+
+  return name + " · " + side;
+}
+
+function getMySideClassName(result) {
+  if (result === "won") {
+    return "history-side winner";
+  }
+
+  return "history-side";
+}
+
+function getOpponentSideClassName(result) {
+  if (result === "lost") {
+    return "history-side winner";
+  }
+
+  return "history-side";
+}
+
+function getResultClassName(result) {
+  return "history-result " + result;
+}
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("auth");
@@ -22,6 +92,60 @@ export default function App() {
   const [isSubmittingArgument, setIsSubmittingArgument] = useState(false);
   const [rulingResult, setRulingResult] = useState("");
   const [loadingPlan, setLoadingPlan] = useState(null);
+  const [standing, setStanding] = useState(EMPTY_STANDING);
+  const [historyCases, setHistoryCases] = useState([]);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [historyVersion, setHistoryVersion] = useState(0);
+
+  function loadHistory(offset) {
+    setHistoryLoading(true);
+    setHistoryError("");
+
+    getCaseHistory(offset, HISTORY_PAGE_SIZE)
+      .then(function (data) {
+        setHistoryLoading(false);
+
+        if (!data) {
+          setHistoryError("Could not load case history.");
+          return;
+        }
+
+        if (data.error) {
+          setHistoryError(data.error);
+          return;
+        }
+
+        if (data.standing) {
+          setStanding(data.standing);
+        } else {
+          setStanding(EMPTY_STANDING);
+        }
+
+        if (data.hasMore) {
+          setHistoryHasMore(true);
+        } else {
+          setHistoryHasMore(false);
+        }
+
+        setHistoryCases(function (currentCases) {
+          if (offset === 0) {
+            return data.cases;
+          }
+
+          return currentCases.concat(data.cases);
+        });
+      })
+      .catch(function () {
+        setHistoryLoading(false);
+        setHistoryError("Could not load case history.");
+      });
+  }
+
+  function handleLoadMoreCases() {
+    loadHistory(historyCases.length);
+  }
 
   function handleGenerateRuling() {
     if (!socket || !roomState) {
@@ -66,6 +190,10 @@ export default function App() {
       setCurrentPage("auth");
       setRoomState(null);
       setMessages([]);
+      setHistoryCases([]);
+      setStanding(EMPTY_STANDING);
+      setHistoryHasMore(false);
+      setHistoryError("");
     });
   }
 
@@ -216,6 +344,17 @@ export default function App() {
     });
   }, []);
 
+  useEffect(
+    function () {
+      if (currentPage !== "caseFiles" || !currentUser) {
+        return;
+      }
+
+      loadHistory(0);
+    },
+    [currentPage, currentUser, historyVersion],
+  );
+
   useEffect(function () {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -314,6 +453,21 @@ export default function App() {
         }
 
         setRulingResult(resultText);
+
+        setRoomState(function (currentRoom) {
+          if (!currentRoom) {
+            return currentRoom;
+          }
+
+          const finishedRoom = Object.assign({}, currentRoom);
+          finishedRoom.status = "complete";
+
+          return finishedRoom;
+        });
+
+        setHistoryVersion(function (version) {
+          return version + 1;
+        });
       });
 
       setSocket(nextSocket);
@@ -564,7 +718,7 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                   <div className="standing-card">
                     <i className="fa-solid fa-scale-balanced icon-heard"></i>
                     <div className="standing-number" id="statHeard">
-                      0
+                      {standing.heard}
                     </div>
                     <div className="standing-label">Cases Heard</div>
                   </div>
@@ -572,7 +726,7 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                   <div className="standing-card">
                     <i className="fa-solid fa-trophy icon-won"></i>
                     <div className="standing-number" id="statWon">
-                      0
+                      {standing.won}
                     </div>
                     <div className="standing-label">Won</div>
                   </div>
@@ -580,7 +734,7 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                   <div className="standing-card">
                     <i className="fa-solid fa-circle-xmark icon-lost"></i>
                     <div className="standing-number" id="statLost">
-                      0
+                      {standing.lost}
                     </div>
                     <div className="standing-label">Lost</div>
                   </div>
@@ -588,7 +742,7 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                   <div className="standing-card">
                     <i className="fa-solid fa-circle-minus icon-tied"></i>
                     <div className="standing-number" id="statTied">
-                      0
+                      {standing.tied}
                     </div>
                     <div className="standing-label">Tied</div>
                   </div>
@@ -596,7 +750,7 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                   <div className="standing-card">
                     <i className="fa-solid fa-percent icon-rate"></i>
                     <div className="standing-number" id="statRate">
-                      0%
+                      {standing.winRate}%
                     </div>
                     <div className="standing-label">Win Rate</div>
                   </div>
@@ -605,9 +759,118 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
 
               <div className="history-section">
                 <h3>Debate History</h3>
+                {historyError && <p className="history-error">{historyError}</p>}
+
                 <div className="history-list" id="historyList">
-                  <p>No Debate History.</p>
+                  {historyCases.map(function (caseFile) {
+                    let opponentName = caseFile.opponentName;
+
+                    if (!opponentName) {
+                      opponentName = "No opponent yet";
+                    }
+
+                    const myLabel = buildSideLabel("You", caseFile.mySide);
+                    const opponentLabel = buildSideLabel(
+                      opponentName,
+                      caseFile.opponentSide,
+                    );
+
+                    let caseDate = caseFile.completedAt;
+
+                    if (!caseDate) {
+                      caseDate = caseFile.createdAt;
+                    }
+
+                    let metaText = "Case " + caseFile.roomCode;
+                    metaText = metaText + " · " + formatCaseDate(caseDate);
+
+                    if (caseFile.result === "pending") {
+                      metaText = metaText + " · Verdict not yet delivered";
+                    }
+
+                    let hasScores = false;
+
+                    if (typeof caseFile.myScore === "number") {
+                      if (typeof caseFile.opponentScore === "number") {
+                        hasScores = true;
+                      }
+                    }
+
+                    let scoreText = "Not scored";
+
+                    if (hasScores) {
+                      scoreText = caseFile.myScore + " - " + caseFile.opponentScore;
+                    }
+
+                    let scoreClassName = "history-score-empty";
+
+                    if (hasScores) {
+                      scoreClassName = "history-score";
+                    }
+
+                    return (
+                      <article className="history-card" key={caseFile.id}>
+                        <div className="history-main">
+                          <span className="history-topic">
+                            {caseFile.topic}
+                          </span>
+                          <span className="history-meta">{metaText}</span>
+                        </div>
+
+                        <div className="history-matchup">
+                          <span
+                            className={getMySideClassName(caseFile.result)}
+                          >
+                            {myLabel}
+                          </span>
+
+                          <span className="history-vs">vs</span>
+
+                          <span
+                            className={getOpponentSideClassName(
+                              caseFile.result,
+                            )}
+                          >
+                            {opponentLabel}
+                          </span>
+                        </div>
+
+                        <div className={scoreClassName}>{scoreText}</div>
+
+                        <div className={getResultClassName(caseFile.result)}>
+                          {getResultLabel(caseFile.result)}
+                        </div>
+                      </article>
+                    );
+                  })}
+
+                  {historyCases.length === 0 &&
+                    !historyLoading &&
+                    !historyError && (
+                      <p className="history-end">
+                        No cases on record. Open a case from the Lobby to argue
+                        your first one.
+                      </p>
+                    )}
                 </div>
+
+                {historyLoading && (
+                  <p className="history-loader">Pulling case files...</p>
+                )}
+
+                {historyHasMore && !historyLoading && (
+                  <button
+                    className="button secondary-button load-more"
+                    type="button"
+                    onClick={handleLoadMoreCases}
+                  >
+                    Load more cases
+                  </button>
+                )}
+
+                {!historyHasMore && historyCases.length > 0 && (
+                  <p className="history-end">End of the record.</p>
+                )}
               </div>
             </div>
           )}

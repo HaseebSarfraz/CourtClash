@@ -17,6 +17,7 @@ const { DebateAnalysis, linkDebateAnalysisModels} = require("./models/debate_ana
 
 const { router: authRouter } = require("./routers/auth_router");
 const checkoutRouter = require("./routers/checkout");
+const casesRouter = require("./routers/cases_router");
 const webhookRouter = require("./routers/webhooks");
 const { router: aiRouter, getAiRuling, analyzeDebateTurn} = require("./routers/ai_router");
 
@@ -102,6 +103,7 @@ app.use(express.static("static"));
 app.use("/auth", authRouter);
 app.use("/ai", aiRouter);
 app.use("/api", checkoutRouter);
+app.use("/api", casesRouter);
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -114,6 +116,30 @@ const io = new Server(server, {
 io.engine.use(middleware);
 io.engine.use(passport.initialize());
 io.engine.use(passport.session());
+
+const MAX_ARGUMENTS_PER_PLAYER = 3;
+const MAX_ARGUMENTS_TOTAL = MAX_ARGUMENTS_PER_PLAYER * 2;
+
+function totalRubricScore(playerRubric) {
+  if (!playerRubric) {
+    return null;
+  }
+
+  const categoryNames = Object.keys(playerRubric);
+
+  let total = 0;
+
+  for (let index = 0; index < categoryNames.length; index += 1) {
+    const categoryName = categoryNames[index];
+    const categoryScore = playerRubric[categoryName];
+
+    if (typeof categoryScore === "number") {
+      total = total + categoryScore;
+    }
+  }
+
+  return total;
+}
 
 function randomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -141,6 +167,10 @@ function cleanCase(debateCase) {
     userTwoId: debateCase.userTwoId,
     userOneSide: debateCase.userOneSide,
     userTwoSide: debateCase.userTwoSide,
+    winnerUserId: debateCase.winnerUserId,
+    userOneScore: debateCase.userOneScore,
+    userTwoScore: debateCase.userTwoScore,
+    verdictSummary: debateCase.verdictSummary,
   };
 }
 
@@ -291,8 +321,10 @@ io.on("connection", (socket) => {
       where: { caseId: debateCase.id, userId: user.id },
     });
 
-      if (messageCount >= 3) {
-      return callback({ error: "You have already submitted 3 arguments." });
+      if (messageCount >= MAX_ARGUMENTS_PER_PLAYER) {
+      return callback({
+        error: `You have already submitted ${MAX_ARGUMENTS_PER_PLAYER} arguments.`,
+      });
     }
 
       const message = await Message.create({
@@ -345,6 +377,11 @@ io.on("connection", (socket) => {
         return callback({ error: "Room problem." });
       }
 
+      if (debateCase.status === "complete" && debateCase.ruling) {
+        io.to(roomCode).emit("room:ruling", debateCase.ruling);
+        return callback({ ok: true });
+      }
+
       const messages = await Message.findAll({
         where: { caseId: debateCase.id },
         order: [
@@ -352,6 +389,12 @@ io.on("connection", (socket) => {
             ["id", "ASC"],
           ],
       });
+
+      if (messages.length < MAX_ARGUMENTS_TOTAL) {
+        return callback({
+          error: "Both debaters must finish their arguments first.",
+        });
+      }
 
       const args = messages.map((message) => ({
         speaker: getPlayerName(debateCase, message.userId),
@@ -367,6 +410,33 @@ io.on("connection", (socket) => {
       }
 
       const ruling = await getAiRuling(debateCase.topic, args, savedDebateAnalysis.analysis);
+
+      let winnerUserId = null;
+
+      if (ruling.winner === "Player A") {
+        winnerUserId = debateCase.userOneId;
+      } else if (ruling.winner === "Player B") {
+        winnerUserId = debateCase.userTwoId;
+      }
+
+      let rubric = ruling.rubric_breakdown;
+
+      if (!rubric) {
+        rubric = {};
+      }
+
+      const userOneScore = totalRubricScore(rubric.playerA);
+      const userTwoScore = totalRubricScore(rubric.playerB);
+
+      await debateCase.update({
+        status: "complete",
+        winnerUserId: winnerUserId,
+        verdictSummary: ruling.reasoning,
+        userOneScore: userOneScore,
+        userTwoScore: userTwoScore,
+        ruling: ruling,
+        completedAt: new Date(),
+      });
 
       io.to(roomCode).emit("room:ruling", ruling);
       callback({ ok: true });

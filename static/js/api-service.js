@@ -16,6 +16,17 @@ export function getCurrentUser() {
   }).then((res) => res.json());
 }
 
+export function getCaseHistory(offset, limit) {
+  const url = "/api/history?offset=" + offset + "&limit=" + limit;
+
+  return fetch(url, {
+    method: "GET",
+    credentials: "include",
+  }).then(function (response) {
+    return response.json();
+  });
+}
+
 export function createCheckoutSession(plan) {
   return fetch("/api/create-checkout-session", {
     method: "POST",

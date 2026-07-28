@@ -735,6 +735,38 @@ h3 {
   color: #948a76;
 }
 
+.history-result.pending {
+  color: #b8934c;
+}
+
+.history-score {
+  min-width: 70px;
+  text-align: center;
+  color: #1e1b16;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.history-score-empty {
+  min-width: 70px;
+  text-align: center;
+  color: #948a76;
+  font-size: 15px;
+}
+
+.history-error {
+  margin: 0 0 12px 0;
+  color: #c0564a;
+  font-size: 14px;
+}
+
+.load-more {
+  width: fit-content;
+  min-height: 44px;
+  margin: 16px auto 0 auto;
+  font-size: 15px;
+}
+
 .history-loader {
   text-align: center;
   padding: 20px;
