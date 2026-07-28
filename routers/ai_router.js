@@ -4,6 +4,7 @@ const OpenAI = require("openai");
 const { Case } = require("../models/cases");
 const { Message } = require("../models/debate_messages");
 const {DebateAnalysis} = require("../models/debate_analysis");
+const { requireAuth } = require("./auth_router");
 
 const router = express.Router();
 
@@ -381,19 +382,149 @@ Every source must contain a real title and URL returned from web search.
   return JSON.parse(response.output_text);
 }
 
-router.post("/ruling", async (req, res) => {
-  try {
-    const { topic, argumentsList } = req.body;
+const RUBRIC_KEYS = [
+  "relevance",
+  "rebuttal",
+  "non_repetition",
+  "clarity",
+  "factual_accuracy",
+];
 
-    if (!topic || !argumentsList || !Array.isArray(argumentsList)) {
-      return res.status(400).json({
-        error: "Topic and argumentsList are required.",
-      });
+function scoreFromRubric(rubricSide) {
+  if (!rubricSide) {
+    return null;
+  }
+
+  let total = 0;
+  let counted = 0;
+
+  RUBRIC_KEYS.forEach(function (key) {
+    if (typeof rubricSide[key] === "number") {
+      total += rubricSide[key];
+      counted += 1;
+    }
+  });
+
+  if (counted === 0) {
+    return null;
+  }
+
+  return total;
+}
+
+function speakerForMessage(debateCase, message) {
+  if (message.userId === debateCase.userOneId) {
+    return "Player A";
+  }
+
+  if (message.userId === debateCase.userTwoId) {
+    return "Player B";
+  }
+
+  return "Unknown";
+}
+
+async function finalizeCaseRuling(caseId) {
+  const debateCase = await Case.findByPk(caseId);
+
+  if (!debateCase) {
+    throw new Error("Debate case not found");
+  }
+
+  if (debateCase.status === "complete" && debateCase.ruling) {
+    return debateCase.ruling;
+  }
+
+  const messages = await Message.findAll({
+    where: { caseId: debateCase.id },
+    order: [
+      ["createdAt", "ASC"],
+      ["id", "ASC"],
+    ],
+  });
+
+  if (messages.length === 0) {
+    throw new Error("No arguments to rule on");
+  }
+
+  const argumentsList = messages.map(function (message) {
+    return {
+      speaker: speakerForMessage(debateCase, message),
+      text: message.content,
+    };
+  });
+
+  const savedDebateAnalysis = await DebateAnalysis.findOne({
+    where: { caseId: debateCase.id },
+  });
+
+  let structuredAnalysis = null;
+
+  if (savedDebateAnalysis) {
+    structuredAnalysis = savedDebateAnalysis.analysis;
+  }
+
+  const ruling = await getAiRuling(
+    debateCase.topic,
+    argumentsList,
+    structuredAnalysis,
+  );
+
+  let winnerUserId = null;
+
+  if (ruling.winner === "Player A") {
+    winnerUserId = debateCase.userOneId;
+  } else if (ruling.winner === "Player B") {
+    winnerUserId = debateCase.userTwoId;
+  }
+
+  const rubric = ruling.rubric_breakdown || {};
+
+  debateCase.ruling = ruling;
+  debateCase.winnerUserId = winnerUserId;
+  debateCase.verdictSummary = ruling.reasoning || null;
+  debateCase.userOneScore = scoreFromRubric(rubric.playerA);
+  debateCase.userTwoScore = scoreFromRubric(rubric.playerB);
+  debateCase.status = "complete";
+  debateCase.completedAt = new Date();
+
+  debateCase.changed("ruling", true);
+  await debateCase.save();
+
+  return ruling;
+}
+
+router.post("/ruling", requireAuth, async (req, res) => {
+  try {
+    const { caseId, roomCode } = req.body;
+
+    if (!caseId && !roomCode) {
+      return res.status(400).json({ error: "caseId or roomCode is required." });
     }
 
-    const parsed = await getAiRuling(topic, argumentsList);
+    let debateCase = null;
 
-    return res.status(200).json(parsed);
+    if (caseId) {
+      debateCase = await Case.findByPk(caseId);
+    } else {
+      debateCase = await Case.findOne({ where: { roomCode: roomCode } });
+    }
+
+    if (!debateCase) {
+      return res.status(404).json({ error: "Debate case not found." });
+    }
+
+    const isParticipant =
+      debateCase.userOneId === req.user.id ||
+      debateCase.userTwoId === req.user.id;
+
+    if (!isParticipant) {
+      return res.status(403).json({ error: "Not part of this debate." });
+    }
+
+    const ruling = await finalizeCaseRuling(debateCase.id);
+
+    return res.status(200).json(ruling);
   } catch (error) {
     console.error("AI ruling error:", error);
     return res.status(500).json({
@@ -402,4 +533,4 @@ router.post("/ruling", async (req, res) => {
   }
 });
 
-module.exports = { router, getAiRuling, analyzeDebateTurn};
+module.exports = {router, getAiRuling, analyzeDebateTurn, finalizeCaseRuling,};

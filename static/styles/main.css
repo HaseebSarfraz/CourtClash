@@ -478,10 +478,18 @@ h3 {
   min-height: 54px;
   margin-top: 24px;
   border-radius: 4px;
-  background: #bb8f95;
+  background: #ae2f40;
   color: white;
   font-size: 20px;
   font-weight: bold;
+}
+.submit-button:hover {
+  background: #cb5061;
+}
+
+.submit-button:active {
+  transform: translateY(1px);
+  background: #d05e6d;
 }
 
 /* pricing page */

@@ -36,3 +36,11 @@ export function createCheckoutSession(plan) {
   }).then((res) => res.json());
 }
 
+export function generateRuling(roomCode) {
+  return fetch("/api/ruling", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ roomCode }),
+    credentials: "include",
+  }).then((res) => res.json());
+}

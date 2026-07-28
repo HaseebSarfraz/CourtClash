@@ -6,6 +6,7 @@ import {
   getCurrentUser,
   getCaseHistory,
   createCheckoutSession,
+  generateRuling,
 } from "./api-service";
 
 const HISTORY_PAGE_SIZE = 10;
@@ -75,6 +76,30 @@ function getOpponentSideClassName(result) {
 
 function getResultClassName(result) {
   return "history-result " + result;
+}
+
+function formatRuling(ruling) {
+  let resultText = `Winner: ${ruling.winner}\n\n${ruling.reasoning}`;
+
+  if (ruling.factChecks && ruling.factChecks.length > 0) {
+    resultText = resultText + "\n\nFact Checks";
+
+    ruling.factChecks.forEach(function (factCheck) {
+      resultText = resultText + "\n\n";
+      resultText = resultText + factCheck.speaker + ": " + factCheck.claim;
+      resultText = resultText + "\nAssessment: " + factCheck.assessment;
+      resultText = resultText + "\n" + factCheck.explanation;
+
+      if (factCheck.sources) {
+        factCheck.sources.forEach(function (source) {
+          resultText =
+            resultText + "\nSource: " + source.title + " - " + source.url;
+        });
+      }
+    });
+  }
+
+  return resultText;
 }
 
 export default function App() {
@@ -148,24 +173,39 @@ export default function App() {
   }
 
   function handleGenerateRuling() {
-    if (!socket || !roomState) {
+    if (!roomState) {
       return;
     }
 
-    setRulingResult("");
+    setRulingResult("The bench is deliberating...");
 
-    socket.emit(
-      "room:ruling",
-      {
-        roomCode: roomState.roomCode,
-      },
-      function (response) {
-        if (response && response.error) {
-          setRulingResult(response.error);
+    generateRuling(roomState.roomCode)
+      .then(function (ruling) {
+        if (!ruling || ruling.error) {
+          setRulingResult("Could not generate ruling.");
           return;
         }
-      },
-    );
+
+        setRulingResult(formatRuling(ruling));
+
+        setRoomState(function (currentRoom) {
+          if (!currentRoom) {
+            return currentRoom;
+          }
+
+          const finishedRoom = Object.assign({}, currentRoom);
+          finishedRoom.status = "complete";
+
+          return finishedRoom;
+        });
+
+        setHistoryVersion(function (version) {
+          return version + 1;
+        });
+      })
+      .catch(function () {
+        setRulingResult("Could not generate ruling.");
+      });
   }
 
   function handleOpenCaseClick() {
@@ -432,27 +472,7 @@ export default function App() {
       });
 
       nextSocket.on("room:ruling", function (ruling) {
-        let resultText = `Winner: ${ruling.winner}\n\n${ruling.reasoning}`;
-
-        if (ruling.factChecks && ruling.factChecks.length > 0) {
-          resultText = resultText + "\n\nFact Checks";
-
-          ruling.factChecks.forEach(function (factCheck) {
-            resultText = resultText + "\n\n";
-            resultText = resultText + factCheck.speaker + ": " + factCheck.claim;
-            resultText = resultText + "\nAssessment: " + factCheck.assessment;
-            resultText = resultText + "\n" + factCheck.explanation;
-
-            if (factCheck.sources) {
-              factCheck.sources.forEach(function (source) {
-                resultText =
-                  resultText + "\nSource: " + source.title + " - " + source.url;
-              });
-            }
-          });
-        }
-
-        setRulingResult(resultText);
+        setRulingResult(formatRuling(ruling));
 
         setRoomState(function (currentRoom) {
           if (!currentRoom) {
@@ -1124,11 +1144,11 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
 
                 <form className="case-form" onSubmit={handleCreateCaseSubmit}>
                   <label className="field">
-                    <span>Motion for Debate</span>
+                    <span>Topic for Debate</span>
                     <input
                       name="topic"
                       type="text"
-                      placeholder="e.g. Should AI replace teachers in classrooms?"
+                      placeholder="e.g. Will AI replace Software Engineers?"
                     />
                   </label>
 
