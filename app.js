@@ -29,6 +29,8 @@ linkDebateAnalysisModels(dbStuff);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
 const middleware = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -104,7 +106,7 @@ app.use("/api", checkoutRouter);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: frontendUrl,
     credentials: true,
   },
 });
