@@ -378,7 +378,7 @@ io.on("connection", (socket) => {
 async function startServer() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: { drop: false } });
+    await sequelize.sync();
     console.log("Database connected successfully.");
 
     server.listen(PORT, () => {

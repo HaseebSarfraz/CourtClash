@@ -10,6 +10,6 @@ linkCaseModels(models);
 linkMessageModels(models);
 linkDebateAnalysisModels(models);
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync().then(() => {
   console.log("Database synced");
 });

@@ -3,18 +3,20 @@ const passport = require("passport");
 
 const router = express.Router();
 
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
 const startGoogleAuth = passport.authenticate("google", {
   scope: ["profile", "email"],
 });
 
 const handleGoogleCallback = passport.authenticate("google", {
-  failureRedirect: "http://localhost:5173?authError=google",
+  failureRedirect: `${frontendUrl}?authError=google`,
 });
 
 router.get("/google", startGoogleAuth);
 
 router.get("/google/callback", handleGoogleCallback, (req, res) => {
-  res.redirect("http://localhost:5173");
+  res.redirect(frontendUrl);
 });
 
 router.get("/me", (req, res) => {
