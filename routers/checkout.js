@@ -34,8 +34,8 @@ router.post("/create-checkout-session", requireAuth, async (req, res) => {
       subscription_data: {
         metadata: { userId: user.id, plan },
       },
-      success_url: `${process.env.FRONTEND_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/pricing`,
+      success_url: `${process.env.FRONTEND_URL}/?checkout=success`,
+      cancel_url: `${process.env.FRONTEND_URL}/?checkout=canceled`,
     });
 
     res.json({ url: session.url });
