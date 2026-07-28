@@ -12,15 +12,19 @@ dotenv.config();
 const { User, linkUserModels } = require("./models/users");
 const { Case, linkCaseModels } = require("./models/cases");
 const { Message, linkMessageModels } = require("./models/debate_messages");
+
+const { DebateAnalysis, linkDebateAnalysisModels} = require("./models/debate_analysis");
+
 const { router: authRouter } = require("./routers/auth_router");
 const checkoutRouter = require("./routers/checkout");
 const webhookRouter = require("./routers/webhooks");
-const { router: aiRouter, getAiRuling } = require("./routers/ai_router");
+const { router: aiRouter, getAiRuling, analyzeDebateTurn} = require("./routers/ai_router");
 
-const dbStuff = { User, Case, Message };
+const dbStuff = { User, Case, Message,DebateAnalysis };
 linkUserModels(dbStuff);
 linkCaseModels(dbStuff);
 linkMessageModels(dbStuff);
+linkDebateAnalysisModels(dbStuff);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,11 +79,13 @@ passport.use(
         });
 
         if (!user) {
+
           user = await User.create({
             name: profile.displayName,
             email: email,
             subscriptionStatus: null,
           });
+          
         }
 
         done(null, user);
@@ -251,19 +257,58 @@ io.on("connection", (socket) => {
         return callback({ error: "Message cannot be empty." });
       }
 
-      const messageCount = await Message.count({
-        where: { caseId: debateCase.id, userId: user.id },
-      });
+      const latestMessage = await Message.findOne({
+      where: { caseId: debateCase.id },
+      order: [
+        ["createdAt", "DESC"],
+        ["id", "DESC"],
+      ],
+    });
 
-      if (messageCount >= 4) {
-        return callback({ error: "You have already submitted 4 arguments." });
+    if (latestMessage && latestMessage.analysisStatus !== "complete") {
+      return callback({
+        error: "Wait for the previous argument analysis to finish.",
+      });
+    }
+
+    let expectedUserId = debateCase.userOneId;
+
+    if (latestMessage) {
+      if (latestMessage.userId === debateCase.userOneId) {
+        expectedUserId = debateCase.userTwoId;
+      } else {
+        expectedUserId = debateCase.userOneId;
       }
+    }
+
+    if (user.id !== expectedUserId) {
+      return callback({ error: "It is not your turn." });
+    }
+
+    const messageCount = await Message.count({
+      where: { caseId: debateCase.id, userId: user.id },
+    });
+
+      if (messageCount >= 3) {
+      return callback({ error: "You have already submitted 3 arguments." });
+    }
 
       const message = await Message.create({
         caseId: debateCase.id,
         userId: user.id,
         content,
       });
+
+      try {
+          await analyzeDebateTurn(debateCase.id, message.id);
+        } catch (error) {
+          console.error("Debate analysis failed:", error);
+          await message.destroy();
+
+          return callback({
+            error: "Could not analyze your argument. Please submit it again.",
+          });
+        }
 
       const savedMessage = await Message.findByPk(message.id, {
         include: {
@@ -280,6 +325,7 @@ io.on("connection", (socket) => {
         content: savedMessage.content,
         createdAt: savedMessage.createdAt,
         user: savedMessage.user,
+        
       });
 
       callback({ ok: true });
@@ -299,7 +345,10 @@ io.on("connection", (socket) => {
 
       const messages = await Message.findAll({
         where: { caseId: debateCase.id },
-        order: [["createdAt", "ASC"]],
+        order: [
+            ["createdAt", "ASC"],
+            ["id", "ASC"],
+          ],
       });
 
       const args = messages.map((message) => ({
@@ -307,11 +356,20 @@ io.on("connection", (socket) => {
         text: message.content,
       }));
 
-      const ruling = await getAiRuling(debateCase.topic, args);
+      const savedDebateAnalysis = await DebateAnalysis.findOne({
+        where: { caseId: debateCase.id },
+      });
+
+      if (!savedDebateAnalysis) {
+        return callback({ error: "Debate analysis is not ready." });
+      }
+
+      const ruling = await getAiRuling(debateCase.topic, args, savedDebateAnalysis.analysis);
 
       io.to(roomCode).emit("room:ruling", ruling);
       callback({ ok: true });
     } catch (error) {
+      console.error("room:ruling failed:", error);
       callback({ error: "Could not generate ruling." });
     }
   });

@@ -17,6 +17,15 @@
   --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+.ai-ruling {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  padding-right: 8px;
+}
+
 *,
 *::before,
 *::after {

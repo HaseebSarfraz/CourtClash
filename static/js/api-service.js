@@ -24,3 +24,4 @@ export function createCheckoutSession(plan) {
     credentials: "include",
   }).then((res) => res.json());
 }
+

@@ -19,6 +19,7 @@ export default function App() {
   const [recognition, setRecognition] = useState(null);
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isSubmittingArgument, setIsSubmittingArgument] = useState(false);
   const [rulingResult, setRulingResult] = useState("");
   const [loadingPlan, setLoadingPlan] = useState(null);
 
@@ -137,6 +138,9 @@ export default function App() {
       return;
     }
 
+    setIsSubmittingArgument(true);
+    setRoomError("");
+
     socket.emit(
       "room:message",
       {
@@ -144,6 +148,8 @@ export default function App() {
         content: trimmedTranscript,
       },
       function (response) {
+        setIsSubmittingArgument(false);
+
         if (response && response.error) {
           setRoomError(response.error);
           return;
@@ -287,7 +293,27 @@ export default function App() {
       });
 
       nextSocket.on("room:ruling", function (ruling) {
-        setRulingResult(`Winner: ${ruling.winner}\n\n${ruling.reasoning}`);
+        let resultText = `Winner: ${ruling.winner}\n\n${ruling.reasoning}`;
+
+        if (ruling.factChecks && ruling.factChecks.length > 0) {
+          resultText = resultText + "\n\nFact Checks";
+
+          ruling.factChecks.forEach(function (factCheck) {
+            resultText = resultText + "\n\n";
+            resultText = resultText + factCheck.speaker + ": " + factCheck.claim;
+            resultText = resultText + "\nAssessment: " + factCheck.assessment;
+            resultText = resultText + "\n" + factCheck.explanation;
+
+            if (factCheck.sources) {
+              factCheck.sources.forEach(function (source) {
+                resultText =
+                  resultText + "\nSource: " + source.title + " - " + source.url;
+              });
+            }
+          });
+        }
+
+        setRulingResult(resultText);
       });
 
       setSocket(nextSocket);
@@ -322,12 +348,38 @@ export default function App() {
     roomState && currentUser && roomState.userOneId === currentUser.id
       ? playerOneCount
       : playerTwoCount;
-  const hitMyLimit = myCount >= maxPerPlayer;
-  const canRecordArgument =
-    roomState && roomState.status === "active" && !hitMyLimit;
-  const canSubmitArgument =
-    canRecordArgument && currentTranscript.trim().length > 0;
-  const canGenerateRuling = roomState && messages.length > 0;
+  
+const hitMyLimit = myCount >= maxPerPlayer;
+
+let nextPlayerId = null;
+
+if (roomState) {
+  nextPlayerId = roomState.userOneId;
+}
+
+if (messages.length > 0 && roomState) {
+  const latestMessage = messages[messages.length - 1];
+
+  if (latestMessage.userId === roomState.userOneId) {
+    nextPlayerId = roomState.userTwoId;
+  } else {
+    nextPlayerId = roomState.userOneId;
+  }
+}
+
+const isMyTurn = currentUser && nextPlayerId === currentUser.id;
+
+const canRecordArgument =
+  roomState &&
+  roomState.status === "active" &&
+  !hitMyLimit &&
+  isMyTurn &&
+  !isSubmittingArgument;
+
+const canSubmitArgument =
+canRecordArgument && currentTranscript.trim().length > 0;
+
+const canGenerateRuling = roomState && messages.length === maxTotal;
 
   function getPlayerName(userId) {
     if (!roomState) {
@@ -749,7 +801,7 @@ export default function App() {
                       type="submit"
                       disabled={!canSubmitArgument}
                     >
-                      Submit Argument
+                      {isSubmittingArgument ? "Analyzing..." : "Submit Argument"}
                     </button>
 
                     <button

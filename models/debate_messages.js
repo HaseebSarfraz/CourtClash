@@ -5,7 +5,7 @@ const Message = sequelize.define("DebateMessage", {
   caseId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-  }, 
+  },
   userId: {
     type: DataTypes.UUID,
     allowNull: false,
@@ -14,6 +14,11 @@ const Message = sequelize.define("DebateMessage", {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  analysisStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "pending",
+  }
 });
 
 function linkMessageModels({ Case, User }) {

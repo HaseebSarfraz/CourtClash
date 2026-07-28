@@ -41,11 +41,12 @@ const Case = sequelize.define("Case", {
   },
 });
 
-function linkCaseModels({ User, Message }) {
+function linkCaseModels({ User, Message, DebateAnalysis}) {
   Case.belongsTo(User, { foreignKey: "userOneId", as: "userOne" });
   Case.belongsTo(User, { foreignKey: "userTwoId", as: "userTwo" });
   Case.belongsTo(User, { foreignKey: "winnerUserId", as: "winner" });
   Case.hasMany(Message, { foreignKey: "caseId", as: "messages" });
+  Case.hasOne(DebateAnalysis, { foreignKey: "caseId", as: "debateAnalysis"});
 }
 
 module.exports = { Case, linkCaseModels };
