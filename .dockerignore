@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.env
+.git
+.github
+.agents
+.codex
+*.sqlite
+*.sqlite3
+*.db
+dist
+coverage
+uploads

@@ -3,7 +3,7 @@ const passport = require("passport");
 
 const router = express.Router();
 
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
 const startGoogleAuth = passport.authenticate("google", {
   scope: ["profile", "email"],
