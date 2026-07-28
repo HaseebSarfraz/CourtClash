@@ -13,6 +13,9 @@ node_modules/
 # Local databases and uploads
 *.sqlite
 *.sqlite3
+postgres-data/
+pgdata/
+.db
 uploads/
 
 # Logs
