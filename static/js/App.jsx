@@ -212,6 +212,18 @@ export default function App() {
     setCurrentPopup("openCase");
   }
 
+  function handleOpenHistoryCase(roomCode) {
+    if (!socket || !roomCode) {
+      return;
+    }
+
+    socket.emit("room:join", { roomCode: roomCode }, handleRoomResponse);
+  }
+
+  function handleBackToCaseFiles() {
+    setCurrentPage("caseFiles");
+  }
+
   function handleJoinCaseClick() {
     setCurrentPopup("joinCase");
   }
@@ -730,8 +742,6 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
 
           {currentPage === "caseFiles" && (
             <div className="case-files-page" id="caseFilesPage">
-              <h2>Case Files</h2>
-
               <div className="record-standing">
                 <h3>Record of Standing</h3>
                 <div className="standing-cards">
@@ -829,7 +839,18 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                     }
 
                     return (
-                      <article className="history-card" key={caseFile.id}>
+                      <article
+                        className="history-card"
+                        key={caseFile.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleOpenHistoryCase(caseFile.roomCode)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            handleOpenHistoryCase(caseFile.roomCode);
+                          }
+                        }}
+                      >
                         <div className="history-main">
                           <span className="history-topic">
                             {caseFile.topic}
@@ -962,6 +983,14 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
 
           {currentPage === "debate" && roomState && (
             <div className="debate-page">
+              <button
+                className="button secondary-button"
+                type="button"
+                onClick={handleBackToCaseFiles}
+              >
+                &larr; Back to Case Files
+              </button>
+
               <section className="debate-header">
                 <div>
                   <p className="room-code-label">Room Code</p>
@@ -979,6 +1008,11 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                   {roomState.status === "waiting"
                     ? "Waiting for the second debater to join."
                     : "Both debaters are in the room."}
+                </p>
+                <p>
+                  To continue this debate, share Room Code{" "}
+                  <strong>{roomState.roomCode}</strong> with your partner so
+                  they can rejoin from the Lobby.
                 </p>
               </section>
 
