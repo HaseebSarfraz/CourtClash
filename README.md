@@ -20,13 +20,13 @@ We acknowledge the AI usage policy in CSCC09 and will adhere to it for this proj
 
 CourtClash uses AI as a debate referee. It follows the debate as it happens so the final decision reflects how each side argued and responded. At the end, it checks important facts, chooses a winner, and explains the ruling with supporting sources.
 
-## Capabilties:
+## Capabilities:
 
 Assignees will be in brackets on the same line.
 
 Authentication: Google for our OAuth 2.0 provider. (Haseeb)
 
-Look and Feel: 1-page Base44 prototype mockup. (Hussein, Sid)
+Look and Feel: 1-page Base44 prototype mockup. (Hussein)
 
 ![CourtClash Base44 prototype mockup](mockup/image.png)
 
