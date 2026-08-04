@@ -14,20 +14,32 @@ Siddharth Iyer - iyersid4
 Haseeb Sarfraz - sarfra32
 Hussein Khalil - khalilh7
 
-We acknowledge the AI usage policy in CSCC09 and consent to it for this project.
+We acknowledge the AI usage policy in CSCC09 and will adhere to it for this project.
 
-AI Assistant Summary: 
+## AI Assistant Summary: 
+
+CourtClash uses AI as a debate referee. It follows the debate as it happens so the final decision reflects how each side argued and responded. At the end, it checks important facts, chooses a winner, and explains the ruling with supporting sources.
 
 ## Capabilties:
 
-Authentication: Google for our OAuth 2.0 provider.
+Assignees will be in brackets on the same line.
 
-Look and Feel: 
+Authentication: Google for our OAuth 2.0 provider. (Haseeb)
 
-Real-time Enablement: 
+Look and Feel: 1-page Base44 prototype mockup. (Hussein, Sid)
 
-AI Integration with MCP / Tools: 
+![CourtClash Base44 prototype mockup](mockup/image.png)
 
-Stripe Integration: 
+Real-time Enablement: We're using socket.io and socket.io-client. Connections share Express sessions and Passport authentication. (Siddharth)
 
-Deployment: 
+AI Integration with MCP / Tools: (Haseeb)
+
+**Which AI provider are we using?** We use OpenAI through the OpenAI API with two different models. GPT-4.1 mini performs the turn by turn debate monitoring. It extracts claims, supporting points, rebuttals, repetitions, and  contradictions from each submitted argument. GPT-5.6 Luna acts as the final debate judge. It receives the complete transcript and structured debate analysis, then uses web search to fact check important claims and generate a researched decision. Voice transcription is handled separately in the browser using the Web Speech API and does not use OpenAI.
+
+**How are we integrating the AI?** We integrate OpenAI through our Express backend rather than calling it directly from the frontend. When an argument is submitted through sockets, the backend stores the transcript, sends the newest argument and debate history to the monitor model, and saves the resulting structured analysis in PostgreSQL. At the end of the debate, the backend sends the original transcript, aggregate analysis, and judging criteria to the final judge. The returned verdict is saved and emitted to both players through sockets. Keeping AI calls in the backend protects the API key and allows the server to control prompts.
+
+Stripe Integration: pk_test_51TsEFcDk6qo9enUmlXVBqtWX9U1ls8q8WRra1VQmMIClkqnS8is3hTa1Y26eqA6nwENsZ18kn2yjPsIjfs97Fms100W0xH9ZHP (Hussein)
+
+Deployment: [project-courtclash.amazingcloud.space](https://project-courtclash.amazingcloud.space/) (Siddharth)
+
+Architecture: (All)
