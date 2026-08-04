@@ -720,7 +720,7 @@ const canGenerateRuling = roomState && messages.length === maxTotal;
                     <h3>Take the Stand</h3>
                     <p>
                       Alternate turns - opening, argument, rebuttal. Speak your
-                      piece; it&apos;s transcribed to the record live.
+                      piece and have it transcribed.
                     </p>
                   </article>
 
