@@ -38,7 +38,7 @@ AI Integration with MCP / Tools: (Haseeb)
 
 **How are we integrating the AI?** We integrate OpenAI through our Express backend rather than calling it directly from the frontend. When an argument is submitted through sockets, the backend stores the transcript, sends the newest argument and debate history to the monitor model, and saves the resulting structured analysis in PostgreSQL. At the end of the debate, the backend sends the original transcript, aggregate analysis, and judging criteria to the final judge. The returned verdict is saved and emitted to both players through sockets. Keeping AI calls in the backend protects the API key and allows the server to control prompts.
 
-Stripe Integration: pk_test_51TsEFcDk6qo9enUmlXVBqtWX9U1ls8q8WRra1VQmMIClkqnS8is3hTa1Y26eqA6nwENsZ18kn2yjPsIjfs97Fms100W0xH9ZHP (Hussein)
+Stripe Integration: Stripe test mode (Hussein)
 
 Deployment: [project-courtclash.amazingcloud.space](https://project-courtclash.amazingcloud.space/) (Siddharth)
 
